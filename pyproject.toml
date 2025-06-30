@@ -1,0 +1,52 @@
+[project]
+name = "fastapi_admin"
+version = "0.1.0"
+description = "FastApi Admin"
+authors = [{ name = "Adel ESMAIRI", email = "esmairi.github@gmail.com" }]
+
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi[standard]",
+    "pydantic-settings",
+    "sqlmodel",
+    "alembic",
+    "passlib[bcrypt]"
+]
+#[tool.setuptools]
+#packages = [
+#    "apps", "core", "migrations"
+#]
+[project.urls]
+Homepage = "https://github.com/esmairi/fastapi_admin"
+Repository = "https://github.com/esmairi/fastapi_admin"
+
+#[build-system]
+#requires = ["setuptools", "wheel"]
+#build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+
+[project.optional-dependencies]
+dev = [
+    "build",
+    "twine",
+    "pytest",
+    "httpx",
+    "pre-commit",
+    "black",
+    "flake8",
+    "mypy",
+]
+
+[tool.mypy]
+strict = true
+#ignore_missing_imports = true
+#disallow_untyped_defs = true
+#disallow_untyped_calls = true
+#disallow_untyped_decorators = false
+
