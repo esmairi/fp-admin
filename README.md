@@ -22,7 +22,7 @@ pre-commit run --all-files
 Run Server:
 
 ```bash
-python fp_admin/main.py
+python main.py
 ```
 
 CLI:
