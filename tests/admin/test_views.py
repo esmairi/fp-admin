@@ -1,4 +1,7 @@
-def test_get_views(client):
+from fastapi.testclient import TestClient
+
+
+def test_get_views(client: TestClient) -> None:
     response = client.get("/admin/v1/views/")
     assert response.status_code == 200
     assert response.json() == {
@@ -94,7 +97,7 @@ def test_get_views(client):
     }
 
 
-def test_get_views_by_model(client):
+def test_get_views_by_model(client: TestClient) -> None:
     response = client.get("/admin/v1/views/User")
     assert response.status_code == 200
     assert response.json() == [

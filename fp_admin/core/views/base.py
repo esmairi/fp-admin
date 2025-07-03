@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from sqlmodel import SQLModel
 
@@ -12,14 +12,16 @@ class BaseViewFactory(ABC):
         self.model = model
 
     @staticmethod
-    def resolve_form_type(py_type: type) -> FieldType:
+    def resolve_form_type(py_type: Optional[type]) -> FieldType:
         """Map Python types to field types."""
-        mapping = {
+        mapping: dict[type, FieldType] = {
             str: "text",
             int: "number",
             float: "number",
             bool: "checkbox",
         }
+        if py_type is None:
+            return "text"
         return mapping.get(py_type, "text")
 
     def get_fields(self) -> List[FormField]:

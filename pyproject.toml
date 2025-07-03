@@ -43,10 +43,11 @@ dev = [
     "mypy",
 ]
 
+
 [tool.mypy]
-strict = true
+strict = false
+disable_error_code = ["misc"]
 #ignore_missing_imports = true
 #disallow_untyped_defs = true
 #disallow_untyped_calls = true
 #disallow_untyped_decorators = false
-

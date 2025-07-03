@@ -1,12 +1,13 @@
 from typing import List, Type, Optional
 from sqlmodel import SQLModel
+from typing import Dict, Any
 
 
 class AdminModelRegistry:
-    _registry: List[dict] = []
+    _registry: List[Dict[str, Any]] = []
 
     @classmethod
-    def register(cls, config: "AdminModel"):
+    def register(cls, config: "AdminModel") -> None:
         cls._registry.append(
             {
                 "model": config.model,
@@ -17,7 +18,7 @@ class AdminModelRegistry:
         )
 
     @classmethod
-    def all(cls):
+    def all(cls) -> List[Dict[str, Any]]:
         return cls._registry
 
 
@@ -28,7 +29,7 @@ class AdminModel:
     model: Type[SQLModel]
     label: Optional[str] = None
 
-    def __init_subclass__(cls, **kwargs):
+    def __init_subclass__(cls, **kwargs: Any):
         super().__init_subclass__(**kwargs)
         if hasattr(cls, "model"):
             admin_model_registry.register(cls())

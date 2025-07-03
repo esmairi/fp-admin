@@ -1,4 +1,7 @@
-def test_get_apps(client):
+from fastapi.testclient import TestClient
+
+
+def test_get_apps(client: TestClient) -> None:
     response = client.get("/admin/v1/apps/")
     assert response.status_code == 200
     assert response.json() == [
