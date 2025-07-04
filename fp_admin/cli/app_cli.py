@@ -43,18 +43,20 @@ def startapp(name: str) -> None:
     if app_dir.exists():
         typer.echo("❌ App already exists.")
         raise typer.Exit(code=1)
+    if not Path("apps").exists():
+        typer.echo("❌ Apps doeos not exists.")
+
+    def render_template(template_name: str) -> None:
+        (app_dir / f"{template_name}.py").write_text(
+            (Path(__file__).parent / "templates" / f"{template_name}.tpl")
+            .read_text()
+            .format(app_name=name)
+        )
 
     app_dir.mkdir(parents=True)
     (app_dir / "__init__.py").touch()
-    (app_dir / "models.py").write_text("from sqlmodel import SQLModel\n\n")
-    (app_dir / "views_api.py").write_text(
-        """from fastapi import APIRouter\n\nrouter = APIRouter()\n"""
-    )
-    (app_dir / "schemas.py").write_text("# Add Pydantic schemas here\n")
-    (app_dir / "services.py").write_text("# Add business logic here\n")
-    (app_dir / "apps.py").write_text(
-        f"""class {name.title()}Config:\n    name = "apps.{name}"\n\n"""
-    )
+    for template in ["admin", "models", "views", "routers"]:
+        render_template(template)
 
     typer.echo(f"✅ App '{name}' created at apps/{name}/")
 
