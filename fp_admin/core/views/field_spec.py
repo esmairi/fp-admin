@@ -2,7 +2,9 @@ from typing import List, Union, Optional, Literal
 
 from pydantic import BaseModel
 
-FieldType = Literal["text", "number", "date", "checkbox", "radio", "select", "textarea"]
+FieldType = Literal[
+    "text", "number", "date", "checkbox", "radio", "select", "textarea", "Any"
+]
 
 
 class FieldOption(BaseModel):

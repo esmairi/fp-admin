@@ -12,7 +12,7 @@ app_cli = typer.Typer()
 ALEMBIC = "alembic.ini"
 
 
-def run(cmd: list[str]):
+def run(cmd: list[str]) -> None:
     typer.echo(f"🔧 Running: {' '.join(cmd)}")
     subprocess.run(cmd, check=True)
 
@@ -20,22 +20,24 @@ def run(cmd: list[str]):
 @app_cli.command()
 def make_migrations(
     name: str = typer.Option(..., "--name", "-n", help="Migration name")
-):
+) -> None:
     """Generate a new Alembic migration."""
-    if not Path('migrations').exists():
-        template_path =  (Path(__file__).parent.parent / 'core' / 'alembic_template').as_posix()
-        run(["alembic", "init", "migrations", '-t', template_path])
+    if not Path("migrations").exists():
+        template_path = (
+            Path(__file__).parent.parent / "core" / "alembic_template"
+        ).as_posix()
+        run(["alembic", "init", "migrations", "-t", template_path])
     run(["alembic", "-c", str(ALEMBIC), "revision", "--autogenerate", "-m", name])
 
 
 @app_cli.command()
-def migrate():
+def migrate() -> None:
     """Apply latest Alembic migrations."""
     run(["alembic", "-c", str(ALEMBIC), "upgrade", "head"])
 
 
 @app_cli.command()
-def startapp(name: str):
+def startapp(name: str) -> None:
     """Create a new apps with models.py, views_api.py, etc."""
     app_dir = Path("apps") / name
     if app_dir.exists():
@@ -58,7 +60,7 @@ def startapp(name: str):
 
 
 @app_cli.command()
-def createsuperuser():
+def createsuperuser() -> None:
     """Create an models user."""
     from fp_admin.apps.auth.models import User  # Local import to ensure model is loaded
 

@@ -1,5 +1,5 @@
 from typing import List, Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 from fp_admin.core.views.field_spec import FormField
