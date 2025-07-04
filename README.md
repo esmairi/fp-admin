@@ -1,6 +1,6 @@
 # fastapi-admin
 
-Install all dependencies  
+Install all dependencies
 ```bash
 uv sync --all-extras --dev
 ````
@@ -38,4 +38,3 @@ Run migrations
 ```bash
 python fp_admin/manage.py migrate
 ```
-

@@ -7,7 +7,7 @@ class ViewRegistry:
     _views: Dict[str, List[BaseView]] = {}
 
     @classmethod
-    def register(cls, model: Type[SQLModel], view: BaseView):
+    def register(cls, model: Type[SQLModel], view: BaseView) -> None:
         model_name = model.__name__
         if model_name not in cls._views:
             cls._views[model_name] = []

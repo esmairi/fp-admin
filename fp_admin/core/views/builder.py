@@ -14,7 +14,7 @@ class BaseViewBuilder:
     fields: List[FormField]
     default_form_id: Optional[str] = None
 
-    def __init_subclass__(cls):
+    def __init_subclass__(cls) -> None:
         super().__init_subclass__()
         # If any key attribute is missing, call build()
         if not all(
