@@ -1,10 +1,23 @@
 [project]
-name = "fastapi_admin"
-version = "0.1.0"
-description = "FastApi Admin"
+name = "fp_admin"
+version = "0.0.3beta"
+description = "FastAPI Admin"
+readme = "README.md"
+requires-python = ">=3.12"
 authors = [{ name = "Adel ESMAIRI", email = "esmairi.github@gmail.com" }]
+maintainers = [
+    { name = "Rahma Bader" }
+]
 
-requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
+
 dependencies = [
     "fastapi[standard]",
     "pydantic-settings",
@@ -12,17 +25,32 @@ dependencies = [
     "alembic",
     "passlib[bcrypt]"
 ]
-#[tool.setuptools]
-#packages = [
-#    "apps", "core", "migrations"
-#]
-[project.urls]
-Homepage = "https://github.com/esmairi/fastapi_admin"
-Repository = "https://github.com/esmairi/fastapi_admin"
+[project.scripts]
+fp-admin = "fp_admin.cli:main"
 
-#[build-system]
-#requires = ["setuptools", "wheel"]
-#build-backend = "setuptools.build_meta"
+[project.optional-dependencies]
+dev = [
+    "black==25.1.0",
+    "build==1.2.2.post1",
+    "flake8==7.3.0",
+    "httpx==0.28.1",
+    "mypy==1.16.1",
+    "mypy-extensions==1.1.0",
+    "pre-commit==4.2.0",
+    "pytest==8.4.1",
+    "twine==6.1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/esmairi/fp-admin"
+Repository = "https://github.com/esmairi/fp-admin"
+
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["fp_admin*"]
 
 [tool.black]
 line-length = 88
@@ -30,18 +58,6 @@ target-version = ["py312"]
 
 [tool.isort]
 profile = "black"
-
-[project.optional-dependencies]
-dev = [
-    "build",
-    "twine",
-    "pytest",
-    "httpx",
-    "pre-commit",
-    "black",
-    "flake8",
-    "mypy",
-]
 
 [tool.mypy]
 strict = true
