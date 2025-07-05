@@ -1,5 +1,5 @@
-from fp_admin.core.views.builder import BaseViewBuilder
-from fp_admin.core.views.field_spec import FormField
+from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.admin.views import FormField
 
 
 # class MyModelFormView(BaseViewBuilder):

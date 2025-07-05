@@ -1,0 +1,230 @@
+import pytest
+from fastapi.testclient import TestClient
+
+
+@pytest.mark.e2e
+def test_get_views(client: TestClient) -> None:
+    response = client.get("/admin/v1/views/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "User": [
+            {
+                "fields": [
+                    {
+                        "disabled": False,
+                        "field_type": "number",
+                        "is_primary_key": True,
+                        "name": "id",
+                        "readonly": False,
+                        "required": False,
+                        "widget": "number",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "username",
+                        "readonly": False,
+                        "required": False,
+                        "title": "Username",
+                        "widget": "text",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "email",
+                        "readonly": False,
+                        "required": False,
+                        "title": "Email",
+                        "widget": "text",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "is_active",
+                        "readonly": False,
+                        "required": False,
+                        "title": "Is Active",
+                        "widget": "text",
+                    },
+                ],
+                "model": "User",
+                "name": "UserForm",
+                "view_type": "form",
+            },
+            {
+                "fields": [
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "username",
+                        "readonly": False,
+                        "required": True,
+                        "title": "Username",
+                        "widget": "text",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "email",
+                        "readonly": False,
+                        "required": True,
+                        "title": "Email",
+                        "widget": "text",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "password",
+                        "readonly": False,
+                        "required": True,
+                        "title": "Password",
+                        "widget": "text",
+                    },
+                    {
+                        "default_value": True,
+                        "disabled": False,
+                        "field_type": "checkbox",
+                        "is_primary_key": False,
+                        "name": "is_active",
+                        "readonly": False,
+                        "required": False,
+                        "title": "Is Active",
+                        "widget": "checkbox",
+                    },
+                    {
+                        "default_value": False,
+                        "disabled": False,
+                        "field_type": "checkbox",
+                        "is_primary_key": False,
+                        "name": "is_superuser",
+                        "readonly": False,
+                        "required": False,
+                        "title": "Is Superuser",
+                        "widget": "checkbox",
+                    },
+                ],
+                "model": "User",
+                "name": "UserList",
+                "view_type": "list",
+            },
+        ]
+    }
+
+
+@pytest.mark.e2e
+def test_get_views_by_model(client: TestClient) -> None:
+    response = client.get("/admin/v1/views/User")
+    assert response.status_code == 200
+    assert response.json() == [
+        {
+            "fields": [
+                {
+                    "disabled": False,
+                    "field_type": "number",
+                    "is_primary_key": True,
+                    "name": "id",
+                    "readonly": False,
+                    "required": False,
+                    "widget": "number",
+                },
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "username",
+                    "readonly": False,
+                    "required": False,
+                    "title": "Username",
+                    "widget": "text",
+                },
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "email",
+                    "readonly": False,
+                    "required": False,
+                    "title": "Email",
+                    "widget": "text",
+                },
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "is_active",
+                    "readonly": False,
+                    "required": False,
+                    "title": "Is Active",
+                    "widget": "text",
+                },
+            ],
+            "model": "User",
+            "name": "UserForm",
+            "view_type": "form",
+        },
+        {
+            "fields": [
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "username",
+                    "readonly": False,
+                    "required": True,
+                    "title": "Username",
+                    "widget": "text",
+                },
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "email",
+                    "readonly": False,
+                    "required": True,
+                    "title": "Email",
+                    "widget": "text",
+                },
+                {
+                    "disabled": False,
+                    "field_type": "text",
+                    "is_primary_key": False,
+                    "name": "password",
+                    "readonly": False,
+                    "required": True,
+                    "title": "Password",
+                    "widget": "text",
+                },
+                {
+                    "default_value": True,
+                    "disabled": False,
+                    "field_type": "checkbox",
+                    "is_primary_key": False,
+                    "name": "is_active",
+                    "readonly": False,
+                    "required": False,
+                    "title": "Is Active",
+                    "widget": "checkbox",
+                },
+                {
+                    "default_value": False,
+                    "disabled": False,
+                    "field_type": "checkbox",
+                    "is_primary_key": False,
+                    "name": "is_superuser",
+                    "readonly": False,
+                    "required": False,
+                    "title": "Is Superuser",
+                    "widget": "checkbox",
+                },
+            ],
+            "model": "User",
+            "name": "UserList",
+            "view_type": "list",
+        },
+    ]

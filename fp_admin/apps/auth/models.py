@@ -1,18 +1,19 @@
-from sqlmodel import SQLModel, Field, Relationship
 from typing import List, Optional
 
+from sqlmodel import Field, Relationship, SQLModel
 
-class UserGroupLink(SQLModel, table=True):  # type: ignore[call-arg]
+
+class UserGroupLink(SQLModel):
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     group_id: int = Field(foreign_key="group.id", primary_key=True)
 
 
-class GroupPermissionLink(SQLModel, table=True):  # type: ignore[call-arg]
+class GroupPermissionLink(SQLModel):
     group_id: int = Field(foreign_key="group.id", primary_key=True)
     permission_id: int = Field(foreign_key="permission.id", primary_key=True)
 
 
-class Permission(SQLModel, table=True):  # type: ignore[call-arg]
+class Permission(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     codename: str
     name: str
@@ -22,7 +23,7 @@ class Permission(SQLModel, table=True):  # type: ignore[call-arg]
     )
 
 
-class Group(SQLModel, table=True):  # type: ignore[call-arg]
+class Group(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
 
@@ -34,7 +35,7 @@ class Group(SQLModel, table=True):  # type: ignore[call-arg]
     )
 
 
-class User(SQLModel, table=True):  # type: ignore[call-arg]
+class User(SQLModel):
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str
     email: str

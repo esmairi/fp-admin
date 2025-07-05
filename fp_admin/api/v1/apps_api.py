@@ -2,11 +2,11 @@ from typing import Any
 
 from fastapi import APIRouter
 
-from fp_admin.core.apps.app_info import app_info
+from fp_admin.admin.apps import get_apps_info
 
-apps_router = APIRouter()
+apps_api = APIRouter()
 
 
-@apps_router.get("/")
+@apps_api.get("/")
 def list_apps() -> Any:
-    return app_info()
+    return get_apps_info()
