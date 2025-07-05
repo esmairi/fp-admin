@@ -1,24 +1,26 @@
 from typing import List, Type, Optional
 from sqlmodel import SQLModel
-from typing import Dict, Any
+from typing import Any
+
+from fp_admin.apps.auth.models import App
 
 
 class AdminModelRegistry:
-    _registry: List[Dict[str, Any]] = []
+    _registry: List[App] = []
 
     @classmethod
     def register(cls, config: "AdminModel") -> None:
         cls._registry.append(
-            {
-                "model": config.model,
-                "model_name": config.model.__name__,
-                "model_label": config.label,
-                "apps": config.model.__module__.split(".")[-2],
-            }
+            App(
+                model=config.model,
+                model_name=config.model.__name__,
+                model_label=config.label,
+                apps=config.model.__module__.split(".")[-2],
+            )
         )
 
     @classmethod
-    def all(cls) -> List[Dict[str, Any]]:
+    def all(cls) -> list[App]:
         return cls._registry
 
 
