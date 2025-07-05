@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import List, Optional, Type
+from typing import List, Optional, Type, Union
 from pydantic import BaseModel
 
 
@@ -46,9 +46,14 @@ class User(SQLModel, table=True):
     groups: List[Group] = Relationship(back_populates="users", link_model=UserGroupLink)
 
 
+class BasicModel(BaseModel):
+    name: str
+    label: Optional[str]
+
+
 class App(BaseModel):
     id: Optional[int] = Field(default=None, primary_key=True)
-    model: Type[SQLModel]
+    model: Union[List[BasicModel], Type[SQLModel]]
     model_name: str
     model_label: Optional[str] = None
     apps: Optional[str]
