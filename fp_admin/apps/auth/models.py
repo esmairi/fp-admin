@@ -52,7 +52,6 @@ class BasicModel(BaseModel):
 
 
 class App(BaseModel):
-    id: Optional[int] = Field(default=None, primary_key=True)
     model: Union[List[BasicModel], Type[SQLModel]]
     model_name: str
     model_label: Optional[str] = None

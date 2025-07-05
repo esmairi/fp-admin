@@ -6,11 +6,12 @@ def test_get_apps(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json() == [
         {
-            "label": "Authentication & Authorization",
-            "models": [
+            "model_label": "Authentication & Authorization",
+            "model": [
                 {"label": "User of App", "name": "User"},
                 {"label": "Group of users", "name": "Group"},
             ],
-            "name": "auth",
+            "model_name": "auth",
+            "apps": "",
         }
     ]
