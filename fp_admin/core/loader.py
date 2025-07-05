@@ -1,8 +1,6 @@
 import importlib
-import os
 
-from fp_admin import FpAdmin
-from fp_admin.settings import settings
+from fp_admin import FpAdmin, settings
 
 
 def load_app_routers(app: FpAdmin) -> None:
@@ -25,7 +23,6 @@ def load_app_routers(app: FpAdmin) -> None:
 def load_module(module_name: str) -> None:
     for app_path in settings.INSTALLED_APPS:
         try:
-            print(f"{app_path}.{module_name}", os.path.realpath(__file__))
             importlib.import_module(f"{app_path}.{module_name}")
         except ModuleNotFoundError:
             pass

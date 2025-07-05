@@ -26,7 +26,7 @@ dependencies = [
     "passlib[bcrypt]"
 ]
 [project.scripts]
-fp-admin = "fp_admin.cli:main"
+fp-admin = "fp_admin.cli:fp_cli"
 
 [project.optional-dependencies]
 dev = [
@@ -51,6 +51,10 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 include = ["fp_admin*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fp_admin.__version__"}
+
 
 [tool.black]
 line-length = 88

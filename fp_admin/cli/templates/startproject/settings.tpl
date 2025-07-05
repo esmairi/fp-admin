@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     INSTALLED_APPS: List[str] = [
         "fp_admin.apps.auth",
     ]
-    DATABASE_URL: str = "sqlite:///./models.sqlite3"
+    DATABASE_URL: str = "sqlite:///./fp.sqlite3"
     DEBUG: bool = True
 
 
