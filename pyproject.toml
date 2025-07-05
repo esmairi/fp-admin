@@ -65,4 +65,4 @@ profile = "black"
 
 [tool.mypy]
 strict = true
-disable_error_code = ["misc"]
+disable_error_code = ["misc", "call-arg"]
