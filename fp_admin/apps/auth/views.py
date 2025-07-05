@@ -1,6 +1,6 @@
+from fp_admin.admin.fields import FieldView
+from fp_admin.admin.views import BaseViewBuilder
 from fp_admin.apps.auth.models import User
-from fp_admin.core.views.builder import BaseViewBuilder
-from fp_admin.core.views.field_spec import FormField
 
 
 class UserFormView(BaseViewBuilder):
@@ -8,9 +8,10 @@ class UserFormView(BaseViewBuilder):
     view_type = "form"
     name = "UserForm"
     fields = [
-        FormField(name="username", label="Username", field_type="text"),
-        FormField(name="email", label="Email", field_type="text"),
-        FormField(name="is_active", label="Is Active", field_type="text"),
+        FieldView(name="id", field_type="number", is_primary_key=True),
+        FieldView(name="username", title="Username", field_type="text"),
+        FieldView(name="email", title="Email", field_type="text"),
+        FieldView(name="is_active", title="Is Active", field_type="text"),
     ]
 
 
@@ -19,7 +20,7 @@ class UserListView(BaseViewBuilder):
     view_type = "list"
     name = "UserList"
     # fields = [
-    #     FormField(name="username", label="Username", field_type="text"),
-    #     FormField(name="email", label="Email", field_type="text"),
+    #     FieldView(name="username", title="Username", field_type="text"),
+    #     FieldView(name="email", title="Email", field_type="text"),
     # ]
     #

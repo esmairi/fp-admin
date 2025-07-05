@@ -1,4 +1,5 @@
-from .main import fp_cli
+from fp_admin.cli.main import admin_cli
 
+__all__ = ["admin_cli"]
 
-__all__ = ["fp_cli"]
+admin_cli()

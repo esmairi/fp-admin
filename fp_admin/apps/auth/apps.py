@@ -1,4 +1,4 @@
-from fp_admin.core.apps.app_config import AppConfig
+from fp_admin.admin.apps import AppConfig
 
 
 class AuthConfig(AppConfig):

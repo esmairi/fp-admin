@@ -1,17 +1,21 @@
-from typing import Any
+from typing import Dict, List
 
 from fastapi import APIRouter
 
-from fp_admin.core.views.registry import view_registry
+from fp_admin.admin.views import BaseView, view_registry
 
-views_router = APIRouter()
+views_api = APIRouter()
 
 
-@views_router.get("/")
-def list_registered_views() -> Any:
+@views_api.get(
+    "/", response_model=Dict[str, List[BaseView]], response_model_exclude_none=True
+)
+def get_views() -> Dict[str, List[BaseView]]:
     return view_registry.all()
 
 
-@views_router.get("/{model_name}")
-async def get_views_for_model(model_name: str) -> Any:
+@views_api.get(
+    "/{model_name}", response_model=List[BaseView], response_model_exclude_none=True
+)
+async def get_model_views(model_name: str) -> List[BaseView]:
     return view_registry.get(model_name)

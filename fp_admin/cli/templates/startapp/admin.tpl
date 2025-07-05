@@ -1,4 +1,4 @@
-from fp_admin.core.models.base import AdminModel
+from fp_admin.admin.models import AdminModel
 
 # class MyModelAdmin(AdminModel):
 #     model = MyModel

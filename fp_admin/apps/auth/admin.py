@@ -1,5 +1,5 @@
-from fp_admin.apps.auth.models import User, Group
-from fp_admin.core.models.base import AdminModel
+from fp_admin.admin.models import AdminModel
+from fp_admin.apps.auth.models import Group, User
 
 
 class UserAdmin(AdminModel):
