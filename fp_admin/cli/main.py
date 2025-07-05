@@ -3,12 +3,12 @@ from getpass import getpass
 import typer
 import subprocess
 from pathlib import Path
-
+from importlib.metadata import version as metadata_version
 from sqlmodel import select
 
 from fp_admin.core.db import get_session
 
-app_cli = typer.Typer()
+fp_cli = typer.Typer()
 ALEMBIC = "alembic.ini"
 
 
@@ -17,7 +17,65 @@ def run(cmd: list[str]) -> None:
     subprocess.run(cmd, check=True)
 
 
-@app_cli.command()
+@fp_cli.command()
+def version() -> None:
+    typer.echo(metadata_version("fp-admin"))
+
+
+@fp_cli.command()
+def startproject(name: str) -> None:
+    """Create a new apps with models.py, views.py, admin.py, routers.py and apps.py."""
+    project_dir = Path(name)
+    if project_dir.exists():
+        typer.echo("❌ Project already exists.")
+        raise typer.Exit(code=1)
+
+    def render_template(template_name: str) -> None:
+        (project_dir / f"{template_name}.py").write_text(
+            (
+                Path(__file__).parent
+                / "templates"
+                / "startproject"
+                / f"{template_name}.tpl"
+            )
+            .read_text()
+            .format(app_name=name, App=name.title())
+        )
+
+    project_dir.mkdir(parents=True)
+    Path(project_dir / "apps").mkdir()
+    for template in ["app", "settings"]:
+        render_template(template)
+
+    typer.echo(f"✅ Project '{name}' created")
+
+
+@fp_cli.command()
+def startapp(name: str) -> None:
+    """Create a new apps with models.py, views.py, admin.py, routers.py and apps.py."""
+    app_dir = Path("apps") / name
+    if app_dir.exists():
+        typer.echo("❌ App already exists.")
+        raise typer.Exit(code=1)
+    if not Path("apps").exists():
+        typer.echo("❌ Apps doeos not exists.")
+
+    def render_template(template_name: str) -> None:
+        (app_dir / f"{template_name}.py").write_text(
+            (Path(__file__).parent / "templates" / "startapp" / f"{template_name}.tpl")
+            .read_text()
+            .format(app_name=name, App=name.title())
+        )
+
+    app_dir.mkdir(parents=True)
+    (app_dir / "__init__.py").touch()
+    for template in ["admin", "models", "views", "routers", "apps"]:
+        render_template(template)
+
+    typer.echo(f"✅ App '{name}' created at apps/{name}/")
+
+
+@fp_cli.command()
 def make_migrations(
     name: str = typer.Option(..., "--name", "-n", help="Migration name")
 ) -> None:
@@ -30,38 +88,13 @@ def make_migrations(
     run(["alembic", "-c", str(ALEMBIC), "revision", "--autogenerate", "-m", name])
 
 
-@app_cli.command()
+@fp_cli.command()
 def migrate() -> None:
     """Apply latest Alembic migrations."""
     run(["alembic", "-c", str(ALEMBIC), "upgrade", "head"])
 
 
-@app_cli.command()
-def startapp(name: str) -> None:
-    """Create a new apps with models.py, views_api.py, etc."""
-    app_dir = Path("apps") / name
-    if app_dir.exists():
-        typer.echo("❌ App already exists.")
-        raise typer.Exit(code=1)
-    if not Path("apps").exists():
-        typer.echo("❌ Apps doeos not exists.")
-
-    def render_template(template_name: str) -> None:
-        (app_dir / f"{template_name}.py").write_text(
-            (Path(__file__).parent / "templates" / f"{template_name}.tpl")
-            .read_text()
-            .format(app_name=name)
-        )
-
-    app_dir.mkdir(parents=True)
-    (app_dir / "__init__.py").touch()
-    for template in ["admin", "models", "views", "routers"]:
-        render_template(template)
-
-    typer.echo(f"✅ App '{name}' created at apps/{name}/")
-
-
-@app_cli.command()
+@fp_cli.command()
 def createsuperuser() -> None:
     """Create an models user."""
     from fp_admin.apps.auth.models import User  # Local import to ensure model is loaded

@@ -10,13 +10,13 @@ uv sync --all-extras --dev
 Install the git hook scripts
 
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 RUN pre-commit:
 
 ```bash
-pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
 Run Server:
@@ -30,11 +30,11 @@ CLI:
 Make migrations
 
 ```bash
-python fp_admin/manage.py make-migrations -n create_tables
+python fp-admin make-migrations -n create_tables
 ```
 
 Run migrations
 
 ```bash
-python fp_admin/manage.py migrate
+python fp-admin migrate
 ```
