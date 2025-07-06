@@ -420,7 +420,7 @@ wheels = [
 
 [[package]]
 name = "fp-admin"
-version = "0.0.5b0"
+version = "0.0.6b0"
 source = { editable = "." }
 dependencies = [
     { name = "alembic" },

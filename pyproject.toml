@@ -1,6 +1,6 @@
 [project]
 name = "fp-admin"
-version = "0.0.5beta"
+version = "0.0.6beta"
 description = "FastAPI Admin"
 readme = "README.md"
 license = "MIT"
