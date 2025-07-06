@@ -84,8 +84,6 @@ class PostFormView(BaseViewBuilder):
             field_type="checkbox",
             widget="switch",
         ),
-        # Note: Tags field would be handled by the admin system using MultiChoicesField
-        # with dynamic choices loaded from the Tag model
     ]
 
 

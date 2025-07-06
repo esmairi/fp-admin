@@ -133,19 +133,6 @@ from fp_admin.admin.fields import FieldView
 class PostAdmin(AdminModel):
     model = Post
     label = "Blog Posts"
-
-    # Define list view fields
-    list_fields = ["title", "author", "status", "created_at"]
-    search_fields = ["title", "content"]
-
-    # Custom field configurations
-    field_configs = {
-        "content": FieldView.richtext_field("content", "Content"),
-        "tags": MultiChoicesField.multi_choice_tags_field(
-            "tags", "Tags", choices=tag_choices
-        ),
-        "featured_image": FieldView.file_field("featured_image", "Featured Image")
-    }
 ```
 
 ### Field Types and Widgets
@@ -234,33 +221,50 @@ Features demonstrated:
 - File uploads for featured images
 - Admin interface customization
 
-### Custom Field Configuration
+### Custom View Configuration
 
 ```python
-from fp_admin.admin.fields import FieldView, MultiChoicesField, FieldChoices
+from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.admin.fields import FieldView
 
-# Define choices for a select field
-status_choices = [
-    FieldChoices(title="Draft", value="draft"),
-    FieldChoices(title="Published", value="published"),
-    FieldChoices(title="Archived", value="archived")
-]
 
 # Configure admin model with custom fields
-class PostAdmin(AdminModel):
+class PostFormView(BaseViewBuilder):
     model = Post
-    label = "Posts"
-
-    field_configs = {
-        "title": FieldView.text_field("title", "Title", required=True),
-        "content": FieldView.richtext_field("content", "Content"),
-        "status": FieldView.select_field("status", "Status", options=status_choices),
-        "tags": MultiChoicesField.multi_choice_tags_field(
-            "tags", "Tags", choices=tag_choices, max_selections=5
+    view_type = "form"
+    name = "PostForm"
+    fields = [
+        FieldView(name="title", label="Title", field_type="text"),
+        FieldView(name="slug", label="Slug", field_type="text"),
+        FieldView(
+            name="content", label="Content", field_type="textarea", widget="richtext"
         ),
-        "featured_image": FieldView.file_field("featured_image", "Featured Image"),
-        "published_at": FieldView.date_field("published_at", "Published Date")
-    }
+        FieldView(name="excerpt", label="Excerpt", field_type="textarea"),
+        FieldView(name="featured_image", label="Featured Image", field_type="file"),
+        FieldView(
+            name="status",
+            label="Status",
+            field_type="select",
+            widget="radio",
+            options=[
+                {"title": "Draft", "value": "draft"},
+                {"title": "Published", "value": "published"},
+                {"title": "Archived", "value": "archived"},
+            ],
+        ),
+        FieldView(
+            name="is_featured",
+            label="Is Featured",
+            field_type="checkbox",
+            widget="toggle",
+        ),
+        FieldView(
+            name="allow_comments",
+            label="Allow Comments",
+            field_type="checkbox",
+            widget="switch",
+        ),
+    ]
 ```
 
 ## 🛠️ CLI Commands
@@ -433,18 +437,7 @@ class MyAdmin(AdminModel):
     model = MyModel
     label = "My Models"
 
-    # List view configuration
-    list_fields = ["field1", "field2", "field3"]
-    search_fields = ["field1", "field2"]
-    list_per_page = 20
-
-    # Field configurations
-    field_configs = {
-        "field1": FieldView.text_field("field1", "Field 1"),
-        "field2": FieldView.email_field("field2", "Field 2")
-    }
-
-    # Custom actions
+    # TODO Custom actions
     actions = ["publish", "archive"]
 ```
 
