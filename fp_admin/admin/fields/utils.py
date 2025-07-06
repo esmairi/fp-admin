@@ -4,6 +4,7 @@ Field utilities for fp-admin.
 This module provides utility functions for working with fields and SQLModel conversion.
 """
 
+from dataclasses import dataclass
 from typing import Any, List, Literal, cast, get_args, get_origin, get_type_hints
 
 from sqlmodel import SQLModel
@@ -11,6 +12,18 @@ from sqlmodel import SQLModel
 from .base import FieldView
 from .types import FieldType
 from .validation import FieldValidation
+
+
+@dataclass
+class FieldViewConfig:
+    """Configuration for creating FieldView objects."""
+
+    field_name: str
+    field_type: FieldType
+    field_info: Any
+    validation: FieldValidation | None
+    python_type: type
+    is_primary_key: bool = False
 
 
 def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
@@ -47,9 +60,8 @@ def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
         # Get field type and metadata
         field_type = type_hints.get(field_name, Any)
 
-        # Skip primary key fields (fix: use getattr and check for True)
-        if getattr(field_info, "primary_key", False) is True:
-            continue
+        #  primary key fields (fix: use getattr and check for True)
+        is_primary_key = getattr(field_info, "primary_key", False) is True
 
         # Determine field type based on Python type
         field_type_str = _get_field_type(field_type)
@@ -58,13 +70,16 @@ def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
         validation = _create_validation(field_info)
 
         # Create FieldView using appropriate class method
-        field_view = _create_field_view(
+        field_config = FieldViewConfig(
             field_name=field_name,
             field_type=field_type_str,
             field_info=field_info,
             validation=validation,
             python_type=field_type,
+            is_primary_key=is_primary_key,
         )
+
+        field_view = _create_field_view(field_config)
 
         field_views.append(field_view)
 
@@ -198,27 +213,22 @@ def _get_placeholder(field_info: Any) -> str | None:
     return None
 
 
-def _create_field_view(
-    field_name: str,
-    field_type: FieldType,
-    field_info: Any,
-    validation: FieldValidation | None,
-    python_type: type,
-) -> FieldView:
+def _create_field_view(field_config: FieldViewConfig) -> FieldView:
     """Create FieldView using appropriate class method."""
 
     # Prepare kwargs for FieldView
     kwargs = {
-        "required": field_info.is_required(),
-        "default_value": field_info.default,
-        "validation": validation,
-        "help_text": _get_help_text(field_info),
-        "placeholder": _get_placeholder(field_info),
+        "required": field_config.field_info.is_required(),
+        "default_value": field_config.field_info.default,
+        "validation": field_config.validation,
+        "help_text": _get_help_text(field_config.field_info),
+        "placeholder": _get_placeholder(field_config.field_info),
+        "is_primary_key": field_config.is_primary_key,
     }
 
     # Handle Literal types with choices
-    if field_type == "select":
-        choices = _get_literal_choices(python_type)
+    if field_config.field_type == "select":
+        choices = _get_literal_choices(field_config.python_type)
         if choices:
             kwargs["options"] = choices
 
@@ -234,6 +244,10 @@ def _create_field_view(
     }
 
     # Get the appropriate method or default to text_field
-    method = field_methods.get(field_type, FieldView.text_field)
+    method = field_methods.get(field_config.field_type, FieldView.text_field)
 
-    return method(name=field_name, title=_format_field_title(field_name), **kwargs)
+    return method(
+        name=field_config.field_name,
+        title=_format_field_title(field_config.field_name),
+        **kwargs,
+    )

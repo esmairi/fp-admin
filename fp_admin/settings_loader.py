@@ -3,12 +3,14 @@ from typing import Any
 
 from pydantic_settings import BaseSettings
 
+from fp_admin.global_settings import global_settings
+
 
 class LazySettings:
     _settings_instance: BaseSettings | None = None
 
     def _load(self) -> BaseSettings:
-        if self._settings_instance is not None:
+        if self._settings_instance not in [None, global_settings]:
             return self._settings_instance
 
         # Try to import `settings` from the project using fp_admin
@@ -23,8 +25,6 @@ class LazySettings:
                     "Found `settings.py` but failed to load `settings` object."
                 ) from e
         # Fallback to internal settings
-        from fp_admin.global_settings import global_settings
-
         self._settings_instance = global_settings
         return self._settings_instance
 

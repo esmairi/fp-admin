@@ -58,6 +58,16 @@ def test_get_views(client: TestClient) -> None:
                 "fields": [
                     {
                         "disabled": False,
+                        "field_type": "number",
+                        "is_primary_key": True,
+                        "name": "id",
+                        "readonly": False,
+                        "required": False,
+                        "title": "ID",
+                        "widget": "number",
+                    },
+                    {
+                        "disabled": False,
                         "field_type": "text",
                         "is_primary_key": False,
                         "name": "username",
@@ -170,6 +180,16 @@ def test_get_views_by_model(client: TestClient) -> None:
         },
         {
             "fields": [
+                {
+                    "disabled": False,
+                    "field_type": "number",
+                    "is_primary_key": True,
+                    "name": "id",
+                    "readonly": False,
+                    "required": False,
+                    "title": "ID",
+                    "widget": "number",
+                },
                 {
                     "disabled": False,
                     "field_type": "text",

@@ -7,6 +7,7 @@ Uses the User model from fp_admin.apps.auth.models.
 """
 
 from datetime import UTC, datetime
+from enum import Enum
 from typing import List, Literal, Optional
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -37,6 +38,15 @@ class Category(SQLModel, table=True):
     posts: List["Post"] = Relationship(back_populates="category")
 
 
+class PostTag(SQLModel, table=True):
+    """Many-to-many relationship between Post and Tag."""
+
+    post_id: Optional[int] = Field(
+        default=None, foreign_key="post.id", primary_key=True
+    )
+    tag_id: Optional[int] = Field(default=None, foreign_key="tag.id", primary_key=True)
+
+
 class Tag(SQLModel, table=True):
     """Tag model for categorizing blog posts."""
 
@@ -49,16 +59,13 @@ class Tag(SQLModel, table=True):
     )
 
     # Relationships
-    posts: List["Post"] = Relationship(back_populates="tags", link_model="PostTag")
+    posts: List["Post"] = Relationship(back_populates="tags", link_model=PostTag)
 
 
-class PostTag(SQLModel, table=True):
-    """Many-to-many relationship between Post and Tag."""
-
-    post_id: Optional[int] = Field(
-        default=None, foreign_key="post.id", primary_key=True
-    )
-    tag_id: Optional[int] = Field(default=None, foreign_key="tag.id", primary_key=True)
+class Status(str, Enum):
+    draft = "draft"
+    published = "published"
+    archived = "archived"
 
 
 class Post(SQLModel, table=True):
@@ -72,9 +79,7 @@ class Post(SQLModel, table=True):
     featured_image: Optional[str] = Field(
         default=None, description="Featured image file path"
     )
-    status: Literal["draft", "published", "archived"] = Field(
-        default="draft", description="Post status"
-    )
+    status: Status = Field(default=Status.draft, description="Post status")
     is_featured: bool = Field(default=False, description="Whether post is featured")
     allow_comments: bool = Field(
         default=True, description="Whether comments are allowed"

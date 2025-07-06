@@ -64,10 +64,10 @@ class TestSQLModelToFieldViews:
 
         # Should only have name and email, not id
         field_names = [f.name for f in fields]
-        assert "id" not in field_names
+        assert "id" in field_names
         assert "name" in field_names
         assert "email" in field_names
-        assert len(fields) == 2
+        assert field_names == ["id", "name", "email"]
 
     def test_literal_types_with_choices(self) -> None:
         """Test Literal types are converted to select fields with choices."""
@@ -326,7 +326,7 @@ class TestIntegration:
         fields = sqlmodel_to_fieldviews(CompleteUser)
 
         # Should have 6 fields (excluding id)
-        assert len(fields) == 6
+        assert len(fields) == 7
 
         # Check each field
         field_dict = {f.name: f for f in fields}
