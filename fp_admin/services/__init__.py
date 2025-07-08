@@ -6,5 +6,6 @@ complex operations and coordinate between different components.
 """
 
 from .base import BaseService
+from .query_builder import QueryBuilderService
 
-__all__ = ["BaseService"]
+__all__ = ["BaseService", "QueryBuilderService"]

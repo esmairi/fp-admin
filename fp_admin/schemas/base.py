@@ -43,7 +43,7 @@ class PaginationParams(BaseRequest):
 class PaginatedResponse(BaseResponse):
     """Paginated response wrapper."""
 
-    items: List[Any] = Field(description="List of items")
+    data: List[Any] = Field(description="List of items")
     total: int = Field(description="Total number of items")
     page: int = Field(description="Current page number")
     page_size: int = Field(description="Items per page")

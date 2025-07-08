@@ -20,8 +20,6 @@ __version__ = metadata_version("fp-admin")
 class FastAPIAdmin(FastAPI):
     """FastAPI Admin application class."""
 
-    admin_path: str = settings.ADMIN_PATH
-
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         """Initialize the FastAPI Admin application."""
         super().__init__(
@@ -42,7 +40,21 @@ class FastAPIAdmin(FastAPI):
         load_modules(self)
 
         # Include the API router
-        self.include_router(api_router, prefix=self.admin_path)
+        self.include_router(api_router)
+
+        self.set_cors()
+
+    def set_cors(self) -> None:
+        if settings.CORS_ORIGINS:
+            from fastapi.middleware.cors import CORSMiddleware
+
+            self.add_middleware(
+                CORSMiddleware,
+                allow_origins=settings.CORS_ORIGINS,
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
 
 
 # Export main components

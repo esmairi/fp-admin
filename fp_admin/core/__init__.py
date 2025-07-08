@@ -5,7 +5,7 @@ This package contains core functionality including database management,
 module loading, and utility functions.
 """
 
-from .database import check_database_health, db_manager, get_db
+from .database import check_database_health, db_manager, get_session
 from .loader import (
     get_loaded_apps,
     load_app_routers,
@@ -17,7 +17,7 @@ from .loader import (
 __all__ = [
     # Database
     "db_manager",
-    "get_db",
+    "get_session",
     "check_database_health",
     "load_modules",
     "load_app_routers",

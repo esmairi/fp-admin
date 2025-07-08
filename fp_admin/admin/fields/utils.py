@@ -225,6 +225,9 @@ def _create_field_view(field_config: FieldViewConfig) -> FieldView:
         "placeholder": _get_placeholder(field_config.field_info),
         "is_primary_key": field_config.is_primary_key,
     }
+    if field_config.is_primary_key:
+        kwargs["disabled"] = True
+        kwargs["readonly"] = True
 
     # Handle Literal types with choices
     if field_config.field_type == "select":
