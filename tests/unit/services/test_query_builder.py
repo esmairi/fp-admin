@@ -4,6 +4,7 @@ Tests for QueryBuilderService.
 
 from typing import Dict, List, Union, cast
 
+import pytest
 from sqlmodel import Field, SQLModel, select
 
 from fp_admin.services.query_builder import QueryBuilderService
@@ -18,6 +19,7 @@ class PTestModel(SQLModel, table=True):
     category: str = Field()
 
 
+@pytest.mark.unit
 class TestQueryBuilderService:
     """Test cases for QueryBuilderService."""
 
@@ -31,7 +33,8 @@ class TestQueryBuilderService:
 
         # Verify query structure
         assert str(query).startswith(
-            "SELECT testmodel.id, testmodel.name, testmodel.status, testmodel.category"
+            "SELECT ptestmodel.id, ptestmodel.name, ptestmodel.status,"
+            " ptestmodel.category"
         )
         assert str(count_query).startswith("SELECT count(*) AS count_1")
 
@@ -55,9 +58,9 @@ class TestQueryBuilderService:
 
         # Verify only selected fields are in query
         query_str = str(query).lower()
-        assert "testmodel.id, testmodel.name" in query_str
-        assert "testmodel.status" not in query_str
-        assert "testmodel.category" not in query_str
+        assert "ptestmodel.id, ptestmodel.name" in query_str
+        assert "ptestmodel.status" not in query_str
+        assert "ptestmodel.category" not in query_str
 
     def test_add_pagination(self):
         """Test adding pagination to a query."""
@@ -104,5 +107,5 @@ class TestQueryBuilderService:
 
         # Verify both filters and field selection are applied
         query_str = str(query).lower()
-        assert "testmodel.id, testmodel.name" in query_str
+        assert "ptestmodel.id, ptestmodel.name" in query_str
         assert "status = :status_1" in query_str
