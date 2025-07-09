@@ -4,18 +4,74 @@ from fastapi.testclient import TestClient
 
 @pytest.mark.e2e
 def test_get_views(client: TestClient) -> None:
-    response = client.get("/admin/v1/views/")
+    response = client.get("/api/v1/views/")
     assert response.status_code == 200
     assert response.json() == {
-        "User": [
+        "group": [
             {
                 "fields": [
                     {
-                        "disabled": False,
+                        "disabled": True,
                         "field_type": "number",
                         "is_primary_key": True,
                         "name": "id",
+                        "readonly": True,
+                        "required": False,
+                        "title": "ID",
+                        "widget": "number",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "name",
                         "readonly": False,
+                        "required": True,
+                        "title": "Name",
+                        "widget": "text",
+                    },
+                ],
+                "model": "group",
+                "name": "GroupList",
+                "view_type": "list",
+            },
+            {
+                "fields": [
+                    {
+                        "disabled": True,
+                        "field_type": "number",
+                        "is_primary_key": True,
+                        "name": "id",
+                        "readonly": True,
+                        "required": False,
+                        "title": "ID",
+                        "widget": "number",
+                    },
+                    {
+                        "disabled": False,
+                        "field_type": "text",
+                        "is_primary_key": False,
+                        "name": "name",
+                        "readonly": False,
+                        "required": True,
+                        "title": "Name",
+                        "widget": "text",
+                    },
+                ],
+                "model": "group",
+                "name": "GroupForm",
+                "view_type": "form",
+            },
+        ],
+        "user": [
+            {
+                "fields": [
+                    {
+                        "disabled": True,
+                        "field_type": "number",
+                        "is_primary_key": True,
+                        "name": "id",
+                        "readonly": True,
                         "required": False,
                         "widget": "number",
                     },
@@ -41,27 +97,27 @@ def test_get_views(client: TestClient) -> None:
                     },
                     {
                         "disabled": False,
-                        "field_type": "text",
+                        "field_type": "checkbox",
                         "is_primary_key": False,
                         "name": "is_active",
                         "readonly": False,
                         "required": False,
                         "title": "Is Active",
-                        "widget": "text",
+                        "widget": "checkbox",
                     },
                 ],
-                "model": "User",
+                "model": "user",
                 "name": "UserForm",
                 "view_type": "form",
             },
             {
                 "fields": [
                     {
-                        "disabled": False,
+                        "disabled": True,
                         "field_type": "number",
                         "is_primary_key": True,
                         "name": "id",
-                        "readonly": False,
+                        "readonly": True,
                         "required": False,
                         "title": "ID",
                         "widget": "number",
@@ -119,27 +175,27 @@ def test_get_views(client: TestClient) -> None:
                         "widget": "checkbox",
                     },
                 ],
-                "model": "User",
+                "model": "user",
                 "name": "UserList",
                 "view_type": "list",
             },
-        ]
+        ],
     }
 
 
 @pytest.mark.e2e
 def test_get_views_by_model(client: TestClient) -> None:
-    response = client.get("/admin/v1/views/User")
+    response = client.get("/api/v1/views/user")
     assert response.status_code == 200
     assert response.json() == [
         {
             "fields": [
                 {
-                    "disabled": False,
+                    "disabled": True,
                     "field_type": "number",
                     "is_primary_key": True,
                     "name": "id",
-                    "readonly": False,
+                    "readonly": True,
                     "required": False,
                     "widget": "number",
                 },
@@ -165,27 +221,27 @@ def test_get_views_by_model(client: TestClient) -> None:
                 },
                 {
                     "disabled": False,
-                    "field_type": "text",
+                    "field_type": "checkbox",
                     "is_primary_key": False,
                     "name": "is_active",
                     "readonly": False,
                     "required": False,
                     "title": "Is Active",
-                    "widget": "text",
+                    "widget": "checkbox",
                 },
             ],
-            "model": "User",
+            "model": "user",
             "name": "UserForm",
             "view_type": "form",
         },
         {
             "fields": [
                 {
-                    "disabled": False,
+                    "disabled": True,
                     "field_type": "number",
                     "is_primary_key": True,
                     "name": "id",
-                    "readonly": False,
+                    "readonly": True,
                     "required": False,
                     "title": "ID",
                     "widget": "number",
@@ -243,7 +299,7 @@ def test_get_views_by_model(client: TestClient) -> None:
                     "widget": "checkbox",
                 },
             ],
-            "model": "User",
+            "model": "user",
             "name": "UserList",
             "view_type": "list",
         },

@@ -159,7 +159,7 @@ db_manager = DatabaseManager(
 )
 
 
-def get_db() -> Generator[Session, None, None]:
+def get_session() -> Generator[Session, None, None]:
     """FastAPI dependency for database session.
 
     Yields:
@@ -182,6 +182,6 @@ def check_database_health() -> bool:
 __all__ = [
     "DatabaseManager",
     "db_manager",
-    "get_db",
+    "get_session",
     "check_database_health",
 ]

@@ -10,7 +10,7 @@ class ViewRegistry:
 
     @classmethod
     def register(cls, model: Type[SQLModel], view: BaseView) -> None:
-        model_name = model.__name__
+        model_name = model.__name__.lower()
         if model_name not in cls._views:
             cls._views[model_name] = []
         cls._views[model_name].append(view)

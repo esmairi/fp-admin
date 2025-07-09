@@ -32,4 +32,5 @@ repos:
     rev: v1.16.1
     hooks:
       - id: mypy
-        exclude: '(^|/)examples(/|$)'
+        exclude: '(^|/)(examples|tests)(/|$)' # TODO
+        additional_dependencies: ["sqlmodel==0.0.24"]

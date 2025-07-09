@@ -45,14 +45,14 @@ class BaseViewBuilder:
             return FormView(
                 name=cls.name,
                 view_type="form",
-                model=cls.model.__name__,
+                model=cls.model.__name__.lower(),
                 fields=cls.fields or [],
             )
         if cls.view_type == "list":
             return ListView(
                 name=cls.name,
                 view_type="list",
-                model=cls.model.__name__,
+                model=cls.model.__name__.lower(),
                 default_form_id=cls.default_form_id or f"{cls.model.__name__}Form",
                 fields=cls.fields or [],
             )

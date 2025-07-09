@@ -31,7 +31,7 @@ def load_app_routers(app: "FastAPIAdmin") -> None:
             module = importlib.import_module(f"{app_path}.routers")
             router = getattr(module, "router", None)
             if router:
-                router_path = f"{app.admin_path}/{app_path.split('.')[-1]}"
+                router_path = f"{settings.ADMIN_PATH}/{app_path.split('.')[-1]}"
                 app.include_router(router, prefix=router_path)
                 logger.info("✅ Registered router from %s", app_path)
             else:
@@ -54,7 +54,7 @@ def load_module(module_name: str) -> None:
             importlib.import_module(f"{app_path}.{module_name}")
             logger.debug("✅ Loaded %s from %s", module_name, app_path)
         except ModuleNotFoundError:
-            logger.debug("⚠️  No %s module found in %s", module_name, app_path)
+            logger.warning("⚠️  No %s module found in %s", module_name, app_path)
         except ImportError as e:
             logger.error("❌ Error loading %s from %s: %s", module_name, app_path, e)
 

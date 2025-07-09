@@ -3,17 +3,17 @@ from typing import List, Optional
 from sqlmodel import Field, Relationship, SQLModel
 
 
-class UserGroupLink(SQLModel):
+class UserGroupLink(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id", primary_key=True)
     group_id: int = Field(foreign_key="group.id", primary_key=True)
 
 
-class GroupPermissionLink(SQLModel):
+class GroupPermissionLink(SQLModel, table=True):
     group_id: int = Field(foreign_key="group.id", primary_key=True)
     permission_id: int = Field(foreign_key="permission.id", primary_key=True)
 
 
-class Permission(SQLModel):
+class Permission(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     codename: str
     name: str
@@ -23,7 +23,7 @@ class Permission(SQLModel):
     )
 
 
-class Group(SQLModel):
+class Group(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str
 
@@ -35,7 +35,8 @@ class Group(SQLModel):
     )
 
 
-class User(SQLModel):
+class User(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
     id: Optional[int] = Field(default=None, primary_key=True)
     username: str
     email: str

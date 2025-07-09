@@ -8,14 +8,17 @@ from fp_admin.constants import DEFAULT_LOG_FORMAT
 
 
 class Settings(BaseSettings):
+    # Admin settings
+    ADMIN_PATH: str = Field(default="/api", description="Admin interface URL path")
+    API_VERSION: str = Field(default="v1", description="API version")
+
     INSTALLED_APPS: List[str] = [
         "fp_admin.apps.auth",
     ]
     DATABASE_URL: str = "sqlite:///./models.sqlite3"
     DEBUG: bool = True
     DATABASE_ECHO: bool = Field(default=False, description="Enable SQL query logging")
-    # Admin settings
-    ADMIN_PATH: str = Field(default="/admin", description="Admin interface URL path")
+
     # Security settings
     SECRET_KEY: str = Field(
         default="your-secret-key-change-in-production",
@@ -34,7 +37,7 @@ class Settings(BaseSettings):
     )
     CACHE_TTL: int = Field(default=3600, description="Default cache TTL in seconds")
     CORS_ORIGINS: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8000"],
+        default=[],
         description="Allowed CORS origins",
     )
     RELOAD_ON_CHANGE: bool = Field(
