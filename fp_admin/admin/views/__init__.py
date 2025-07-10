@@ -18,7 +18,7 @@ from .factories import FormViewFactory, ListViewFactory
 from .registry import ViewRegistry, view_registry
 
 # Import from types module
-from .types import BaseView, FormView, ListView
+from .views_types import BaseView, FormView, ListView
 
 __all__ = [
     # Base classes

@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     INSTALLED_APPS: List[str] = [
         "fp_admin.apps.auth",
     ]
-    DATABASE_URL: str = "sqlite:///./models.sqlite3"
+    DATABASE_URL: str = "sqlite:///:memory:"
     DEBUG: bool = True
     DATABASE_ECHO: bool = Field(default=False, description="Enable SQL query logging")
 
@@ -75,6 +75,7 @@ class TestingSettings(Settings):
     DATABASE_URL: str = "sqlite:///./test.db"
     DATABASE_ECHO: bool = False
     LOG_LEVEL: str = "ERROR"
+    INSTALLED_APPS: List[str] = ["fp_admin.apps.auth", "tests.fixtures.apps.blog"]
 
 
 def get_environment_settings() -> Settings:

@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from sqlmodel import SQLModel
 
-from fp_admin.admin.fields import FieldType, FieldView
+# from fp_admin.admin.fields import FieldType  # Moved to method scope
 from fp_admin.admin.fields.utils import sqlmodel_to_fieldviews
-from fp_admin.admin.views.types import BaseView
+from fp_admin.admin.views.views_types import BaseView
 
 
 class BaseViewFactory(ABC):
@@ -13,19 +13,21 @@ class BaseViewFactory(ABC):
         self.model = model
 
     @staticmethod
-    def resolve_form_type(python_type: Optional[type]) -> FieldType:
+    def resolve_form_type(python_type: Optional[type]) -> Any:  # FieldType at runtime
         """Map Python types to field types."""
+        from fp_admin.admin.fields import FieldType
+
         mapping: dict[type, FieldType] = {
-            str: "text",
+            str: "string",
             int: "number",
-            float: "number",
-            bool: "checkbox",
+            float: "float",
+            bool: "boolean",
         }
         if python_type is None:
-            return "text"
-        return mapping.get(python_type, "text")
+            return "string"
+        return mapping.get(python_type, "string")
 
-    def get_fields(self) -> List[FieldView]:
+    def get_fields(self) -> List[Any]:  # FieldView at runtime
         return sqlmodel_to_fieldviews(self.model)
 
     @abstractmethod

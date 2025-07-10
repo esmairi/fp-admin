@@ -1,5 +1,5 @@
 from fp_admin.admin.views.base import BaseViewFactory
-from fp_admin.admin.views.types import FormView, ListView
+from fp_admin.admin.views.views_types import FormView, ListView
 
 
 class FormViewFactory(BaseViewFactory):

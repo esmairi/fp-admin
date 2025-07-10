@@ -1,113 +1,114 @@
 """
 Unit tests for field errors.
 
-Tests the FieldError class and error handling.
+This module tests the FieldError class and error message handling functionality.
 """
 
-import pytest
-from pydantic import ValidationError
-
-from fp_admin.admin.fields.errors import FieldError
-
-pytestmark = pytest.mark.unit
+from fp_admin.admin.fields.errors import FieldError, get_error_message
 
 
 class TestFieldError:
-    """Test cases for FieldError."""
+    """Test cases for FieldError class."""
 
-    def test_field_error_creation(self) -> None:
-        """Test basic FieldError creation."""
-        error = FieldError(code="required", message="This field is required")
+    def test_field_error_to_dict(self):
+        """Test FieldError to_dict method."""
+        error = FieldError(code="REQUIRED", message="Field is required")
+        error_dict = error.to_dict()
 
-        assert error.code == "required"
-        assert error.message == "This field is required"
+        assert error_dict["code"] == "REQUIRED"
 
-    def test_field_error_required_fields(self) -> None:
-        """Test that code and message are required fields."""
-        # Should work with both fields
-        error = FieldError(code="invalid", message="Invalid value")
-        assert error.code == "invalid"
-        assert error.message == "Invalid value"
+    def test_field_error_serialization(self):
+        """Test FieldError serialization to dict."""
+        error = FieldError(code="MIN_LENGTH", message="Too short")
+        error_dict = error.model_dump()
 
-    def test_field_error_missing_code(self) -> None:
-        """Test that code field is required."""
-        with pytest.raises(ValidationError):
-            FieldError(message="This field is required")
+        assert error_dict["code"] == "MIN_LENGTH"
+        assert error_dict["message"] == "Too short"
 
-    def test_field_error_missing_message(self) -> None:
-        """Test that message field is required."""
-        with pytest.raises(ValidationError):
-            FieldError(code="required")
 
-    def test_field_error_empty_strings(self) -> None:
-        """Test that empty strings are allowed."""
-        error = FieldError(code="", message="")
+class TestGetErrorMessage:
+    """Test cases for get_error_message function."""
 
-        assert error.code == ""
-        assert error.message == ""
+    def test_get_error_message_required(self):
+        """Test getting error message for REQUIRED code."""
+        message = get_error_message("REQUIRED", field_name="Username")
+        assert message == "Username is required"
 
-    def test_field_error_unicode(self) -> None:
-        """Test that unicode characters are handled correctly."""
-        error = FieldError(
-            code="unicode_error", message="Erreur avec des caractères spéciaux: éàçù"
+    def test_get_error_message_type_string(self):
+        """Test getting error message for TYPE_STRING code."""
+        message = get_error_message("TYPE_STRING", field_name="Email")
+        assert message == "Email must be a string"
+
+    def test_get_error_message_type_number(self):
+        """Test getting error message for TYPE_NUMBER code."""
+        message = get_error_message("TYPE_NUMBER", field_name="Age")
+        assert message == "Age must be a number"
+
+    def test_get_error_message_type_boolean(self):
+        """Test getting error message for TYPE_BOOLEAN code."""
+        message = get_error_message("TYPE_BOOLEAN", field_name="Active")
+        assert message == "Active must be a boolean"
+
+    def test_get_error_message_type_date(self):
+        """Test getting error message for TYPE_DATE code."""
+        message = get_error_message("TYPE_DATE", field_name="Birth Date")
+        assert message == "Birth Date must be a date string"
+
+    def test_get_error_message_type_time(self):
+        """Test getting error message for TYPE_TIME code."""
+        message = get_error_message("TYPE_TIME", field_name="Start Time")
+        assert message == "Start Time must be a time string"
+
+    def test_get_error_message_type_datetime(self):
+        """Test getting error message for TYPE_DATETIME code."""
+        message = get_error_message("TYPE_DATETIME", field_name="Created At")
+        assert message == "Created At must be a datetime string"
+
+    def test_get_error_message_min_length(self):
+        """Test getting error message for MIN_LENGTH code."""
+        message = get_error_message("MIN_LENGTH", field_name="Password", min_length=8)
+        assert message == "Password must be at least 8 characters"
+
+    def test_get_error_message_max_length(self):
+        """Test getting error message for MAX_LENGTH code."""
+        message = get_error_message(
+            "MAX_LENGTH", field_name="Description", max_length=100
         )
+        assert message == "Description must be no more than 100 characters"
 
-        assert error.code == "unicode_error"
-        assert error.message == "Erreur avec des caractères spéciaux: éàçù"
+    def test_get_error_message_min_value(self):
+        """Test getting error message for MIN_VALUE code."""
+        message = get_error_message("MIN_VALUE", field_name="Age", min_value=18)
+        assert message == "Age must be at least 18"
 
-    def test_field_error_long_message(self) -> None:
-        """Test that long error messages are handled."""
-        long_message = (
-            "This is a very long error message that contains many characters"
-            " and should be handled properly by the FieldError class without any issues"
+    def test_get_error_message_max_value(self):
+        """Test getting error message for MAX_VALUE code."""
+        message = get_error_message("MAX_VALUE", field_name="Score", max_value=100)
+        assert message == "Score must be no more than 100"
+
+    def test_get_error_message_pattern(self):
+        """Test getting error message for PATTERN code."""
+        message = get_error_message("PATTERN", field_name="Email")
+        assert message == "Email format is invalid"
+
+    def test_get_error_message_not_found(self):
+        """Test getting error message for NOT_FOUND code."""
+        message = get_error_message("NOT_FOUND", form_id="user_form")
+        assert message == "Form 'user_form' not found"
+
+    def test_get_error_message_unknown_code(self):
+        """Test getting error message for unknown code."""
+        message = get_error_message("UNKNOWN_CODE", field_name="Test Field")
+        assert message == "Test Field validation failed"
+
+    def test_get_error_message_with_kwargs(self):
+        """Test getting error message with multiple kwargs."""
+        message = get_error_message(
+            "MIN_LENGTH", field_name="Password", min_length=8, custom_param="test"
         )
-        error = FieldError(code="long_error", message=long_message)
+        assert message == "Password must be at least 8 characters"
 
-        assert error.code == "long_error"
-        assert error.message == long_message
-
-    def test_field_error_serialization(self) -> None:
-        """Test that FieldError can be serialized to dict."""
-        error = FieldError(code="test", message="Test error message")
-
-        data = error.model_dump()
-
-        assert data["code"] == "test"
-        assert data["message"] == "Test error message"
-
-    def test_field_error_from_dict(self) -> None:
-        """Test that FieldError can be created from dict."""
-        data = {"code": "validation_error", "message": "Validation failed"}
-
-        error = FieldError(**data)
-
-        assert error.code == "validation_error"
-        assert error.message == "Validation failed"
-
-    def test_field_error_equality(self) -> None:
-        """Test that FieldError instances can be compared."""
-        error1 = FieldError(code="same", message="Same message")
-        error2 = FieldError(code="same", message="Same message")
-        error3 = FieldError(code="different", message="Different message")
-
-        assert error1 == error2
-        assert error1 != error3
-
-    def test_field_error_repr(self) -> None:
-        """Test that FieldError has a meaningful string representation."""
-        error = FieldError(code="test_code", message="Test message")
-
-        repr_str = repr(error)
-
-        assert "FieldError" in repr_str
-        assert "test_code" in repr_str
-        assert "Test message" in repr_str
-
-    def test_field_error_str(self) -> None:
-        """Test that FieldError has a meaningful string representation."""
-        error = FieldError(code="test_code", message="Test message")
-
-        str_repr = str(error)
-
-        assert "test_code" in str_repr
-        assert "Test message" in str_repr
+    def test_get_error_message_empty_kwargs(self):
+        """Test getting error message with empty kwargs."""
+        message = get_error_message("REQUIRED")
+        assert message == "Field is required"

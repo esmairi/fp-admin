@@ -42,6 +42,8 @@ dev = [
     "pytest-cov==5.0.0",
     "twine==6.1.0",
     "bandit==1.7.8",
+    "pytest-env",
+    "mkdocs-material"
 ]
 
 [project.urls]
@@ -75,8 +77,6 @@ pythonpath = ["."]
 addopts = "-ra -q"
 testpaths = ["tests"]
 markers = [
-    "unit: Unit tests",
-    "integration: Integration tests",
     "e2e: End-to-end tests",
     "slow: Slow running tests",
 ]

@@ -6,12 +6,16 @@ used throughout the admin interface for form generation.
 """
 
 from .base import FieldView
-from .choices import ChoicesField, FieldChoices, MultiChoicesField
 from .errors import FieldError
-from .relationships import RelationshipField
+from .field_factory import FieldFactory
+from .field_validator import FieldValidation
 from .types import FieldType
-from .validation import FieldValidation
-from .widgets import DEFAULT_WIDGETS, WidgetType
+from .widgets import (
+    DEFAULT_WIDGETS,
+    WidgetConfig,
+    WidgetType,
+    validate_widget_combination,
+)
 
 __all__ = [
     # Field types
@@ -19,14 +23,13 @@ __all__ = [
     # Validation
     "FieldValidation",
     # Field components
-    "FieldChoices",
     "FieldError",
     # Field classes
     "FieldView",
-    "ChoicesField",
-    "MultiChoicesField",
-    "RelationshipField",
+    "FieldFactory",
     # Widget types
     "WidgetType",
+    "WidgetConfig",
     "DEFAULT_WIDGETS",
+    "validate_widget_combination",
 ]

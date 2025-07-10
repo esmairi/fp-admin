@@ -15,6 +15,7 @@ from sqlmodel import Session, SQLModel, select
 from fp_admin.core.database import db_manager
 from fp_admin.exceptions import ServiceError
 from fp_admin.services.query_builder import QueryBuilderService
+from fp_admin.services.utils import get_relationship_fields
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +30,14 @@ class GetAllParams:
     page_size: int = 20
     filters: Optional[Dict[str, str | List[str] | List[int]]] = None
     fields: Optional[List[str]] = None
+    include_relationships: bool = True
+    include: Optional[List[str]] = None
 
 
 class BaseService:
     """Base service class for business logic operations."""
+
+    session: Session
 
     def __init__(self, session: Session) -> None:
         """Initialize the service."""
@@ -53,6 +58,41 @@ class BaseService:
         try:
             with self.session as session:
                 return cast(Optional[T], session.get(model_class, item_id))
+        except Exception as e:
+            self.logger.error(
+                "Error getting %s by ID %s: %s", model_class.__name__, item_id, e
+            )
+            raise ServiceError(
+                f"Failed to get {model_class.__name__} by ID: {e}"
+            ) from e
+
+    def get_by_id_with_fields(
+        self,
+        model_class: Type[T],
+        item_id: int,
+        fields: Optional[List[str]] = None,
+        include_relationships: bool = True,
+    ) -> Optional[Dict[str, Any]]:
+        """Get a model instance by ID and serialize it with field selection.
+
+        Args:
+            model_class: The model class
+            item_id: The ID of the item
+            fields: Optional list of fields to include
+            include_relationships: Whether to include relationships
+
+        Returns:
+            The serialized record as a dictionary, or None if not found
+        """
+        try:
+            with self.session as session:
+                record = session.get(model_class, item_id)
+                if not record:
+                    return None
+                # Serialize the record inside the session context
+                if fields:
+                    return {field: getattr(record, field, None) for field in fields}
+                return self.serialize(record, include_relationships)
         except Exception as e:
             self.logger.error(
                 "Error getting %s by ID %s: %s", model_class.__name__, item_id, e
@@ -83,7 +123,10 @@ class BaseService:
 
             # Build queries using QueryBuilderService
             query, count_query = self.query_builder.build_query(
-                model_class, filters=params.filters, fields=valid_fields
+                model_class,
+                filters=params.filters,
+                fields=valid_fields,
+                include_relationships=params.include_relationships,
             )
 
             # Add pagination to the main query
@@ -95,38 +138,52 @@ class BaseService:
                 total = session.exec(count_query).one()
                 items = session.exec(query).all()
 
-            # Convert items to dictionaries
-            if valid_fields:
-                items = [
-                    {field: getattr(item, field, None) for field in valid_fields}
-                    for item in items
-                ]
-            else:
-                items = [
-                    item.dict() if hasattr(item, "dict") else dict(item)
-                    for item in items
-                ]
+                # Convert items to dictionaries while session is still open
+                if valid_fields:
+                    items = [
+                        (
+                            dict(zip(valid_fields, item))
+                            if isinstance(item, tuple)
+                            else {
+                                field: getattr(item, field, None)
+                                for field in valid_fields
+                            }
+                        )
+                        for item in items
+                    ]
+                else:
+                    # Use centralized serialization inside session context
+                    items = [
+                        self.serialize(item, params.include_relationships)
+                        for item in items
+                    ]
 
-            return items, total
+                return items, total
         except Exception as e:
             self.logger.error("Error getting all %s: %s", model_class.__name__, e)
             raise ServiceError(f"Failed to get all {model_class.__name__}: {e}") from e
 
-    def create(self, model_instance: T) -> T:
+    def create(
+        self,
+        model_instance: T,
+        include_relationships: bool = True,
+    ) -> Dict[str, Any]:
         """Create a new model instance.
 
         Args:
             model_instance: The model instance to create
+            serialize: Whether to serialize the instance before returning
+            include_relationships: Whether to include relationships in serialization
 
         Returns:
-            The created model instance
+            The created model instance or its serialized dict
         """
         try:
-            with db_manager.get_session() as session:
+            with self.session as session:
                 session.add(model_instance)
                 session.commit()
                 session.refresh(model_instance)
-                return model_instance
+                return self.serialize(model_instance, include_relationships)
         except Exception as e:
             self.logger.error(
                 "Error creating %s: %s", model_instance.__class__.__name__, e
@@ -150,6 +207,34 @@ class BaseService:
                 session.commit()
                 session.refresh(model_instance)
                 return model_instance
+        except Exception as e:
+            self.logger.error(
+                "Error updating %s: %s", model_instance.__class__.__name__, e
+            )
+            raise ServiceError(
+                f"Failed to update {model_instance.__class__.__name__}: {e}"
+            ) from e
+
+    def update_with_serialization(
+        self,
+        model_instance: T,
+        include_relationships: bool = True,
+    ) -> Dict[str, Any]:
+        """Update an existing model instance and serialize it.
+
+        Args:
+            model_instance: The model instance to update
+            include_relationships: Whether to include relationships in serialization
+
+        Returns:
+            The updated model instance as a serialized dictionary
+        """
+        try:
+            with self.session as session:
+                session.add(model_instance)
+                session.commit()
+                session.refresh(model_instance)
+                return self.serialize(model_instance, include_relationships)
         except Exception as e:
             self.logger.error(
                 "Error updating %s: %s", model_instance.__class__.__name__, e
@@ -311,6 +396,56 @@ class BaseService:
                 "Error bulk updating %s instances: %s", len(model_instances), e
             )
             raise ServiceError(f"Failed to bulk update instances: {e}") from e
+
+    def serialize_with_relationships(self, item: T) -> Dict[str, Any]:
+        """Serialize a model instance including relationships.
+
+        Args:
+            item: The model instance to serialize
+
+        Returns:
+            Dictionary representation with relationships
+        """
+        if not hasattr(item, "dict"):
+            return dict(item)
+
+        # Get base serialization
+        item_dict = item.model_dump(exclude_none=True)
+
+        # Add relationships
+        for rel_field in get_relationship_fields(type(item)):
+            rel_value = getattr(item, rel_field)
+            if rel_value is not None:
+                if isinstance(rel_value, list):
+                    item_dict[rel_field] = [
+                        (
+                            rel_item.dict(exclude_none=True)
+                            if hasattr(rel_item, "dict")
+                            else dict(rel_item)
+                        )
+                        for rel_item in rel_value
+                    ]
+                else:
+                    item_dict[rel_field] = (
+                        rel_value.dict(exclude_none=True)
+                        if hasattr(rel_value, "dict")
+                        else dict(rel_value)
+                    )
+        return item_dict
+
+    def serialize(self, item: T, include_relationships: bool = True) -> Dict[str, Any]:
+        """Serialize a model instance.
+
+        Args:
+            item: The model instance to serialize
+            include_relationships: Whether to include relationships
+
+        Returns:
+            Dictionary representation of the model instance
+        """
+        if include_relationships:
+            return self.serialize_with_relationships(item)
+        return item.model_dump(exclude_none=True)
 
 
 __all__ = ["BaseService"]
