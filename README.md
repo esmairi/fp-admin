@@ -8,6 +8,9 @@
 
 A modern, FastAPI-based admin framework that provides automatic CRUD interfaces and admin panels for SQLModel-based applications.
 
+
+📚 **Complete documentation is available at**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
+
 ## 🎨 UI Framework
 
 The admin interface is powered by a separate React-based UI project:
@@ -103,11 +106,9 @@ fp-admin createsuperuser
 fp-admin run
 ```
 
-Visit `http://localhost:8000/admin` to access your admin interface!
 
 ## 📖 Documentation
 
-📚 **Complete documentation is available at**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
 
 📖 **GitHub Documentation**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
 
