@@ -36,22 +36,39 @@ myapp/
 fp-admin startapp blog
 ```
 
-This creates a new app with models, views, and admin configuration.
+This creates a new app with models, admin registration, and view configuration.
 
 ## Step 3: Define Your Models
 
 Edit `apps/blog/models.py` to define your models:
 
 ```python
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from typing import Optional, List
 from datetime import datetime
 
 class Category(SQLModel, table=True):
+    """Blog category model."""
+
     id: Optional[int] = Field(default=None, primary_key=True)
-    name: str = Field(max_length=100)
-    description: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    name: str = Field(max_length=100, description="Category name")
+    slug: str = Field(max_length=100, unique=True, description="URL slug")
+    description: Optional[str] = Field(
+        default=None, max_length=500, description="Category description"
+    )
+    color: Optional[str] = Field(
+        default=None, max_length=7, description="Category color hex code"
+    )
+    is_active: bool = Field(default=True, description="Whether category is active")
+    created_at: datetime = Field(
+        default_factory=datetime.now, description="Creation timestamp"
+    )
+    updated_at: datetime = Field(
+        default_factory=datetime.now, description="Last update timestamp"
+    )
+
+    # Relationships
+    posts: List["Post"] = Relationship(back_populates="category")
 
 class Post(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -63,58 +80,65 @@ class Post(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-## Step 4: Create Admin Views
+## Step 4: Register Models in Admin
 
-Edit `apps/blog/views.py` to define admin views:
+Edit `apps/blog/admin.py` to register your models with the admin interface:
 
 ```python
-from fp_admin.admin.views import AdminView
-from fp_admin.admin.fields import FieldView
+from fp_admin.admin.models import AdminModel
 from .models import Category, Post
 
-class CategoryView(AdminView):
+class CategoryAdmin(AdminModel):
     model = Category
     label = "Categories"
-    list_fields = ["id", "name", "description", "created_at"]
-    search_fields = ["name", "description"]
-    ordering_fields = ["name", "created_at"]
 
-    def get_form_fields(self):
-        return [
-            FieldView.text_field("name", "Name", required=True),
-            FieldView.textarea_field("description", "Description"),
-        ]
-
-class PostView(AdminView):
+class PostAdmin(AdminModel):
     model = Post
-    label = "Blog Posts"
-
-    def get_form_fields(self):
-        return [
-            FieldView.text_field("title", "Title", required=True),
-            FieldView.textarea_field("content", "Content", required=True),
-            FieldView.switch_field("published", "Published"),
-            FieldView.foreign_key_field("category_id", "Category", model=Category),
-        ]
+    label = "Posts"
 ```
 
-## Step 5: Register Your App
+## Step 5: Create Admin Views
+
+Edit `apps/blog/views.py` to define detailed admin views:
+
+```python
+from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.admin.fields import FieldFactory
+from .models import Category, Post
+
+class CategoryFormView(BaseViewBuilder):
+    model = Category
+    view_type = "form"
+    name = "CategoryForm"
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field("name", "Name", required=True, max_length=100),
+        FieldFactory.string_field("slug", "Slug", required=True, max_length=100),
+        FieldFactory.textarea_field("description", "Description", max_length=500),
+        FieldFactory.color_field("color", "Color", max_length=7),
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.datetime_field("updated_at", "Updated At"),
+    ]
+
+    creation_fields = ["name", "slug", "description", "color", "is_active"]
+    allowed_update_fields = ["name", "slug", "description", "color", "is_active"]
+
+```
+
+## Step 6: Register Your App
 
 Edit `apps/blog/apps.py` to register your app:
 
 ```python
-from fp_admin.apps import AppConfig
+from fp_admin.admin.apps import AppConfig
 
 class BlogConfig(AppConfig):
     name = "blog"
-    label = "blog"
-    views = [
-        "apps.blog.views.CategoryView",
-        "apps.blog.views.PostView",
-    ]
+    verbose_name = "my blog"
 ```
 
-## Step 6: Set Up Database
+## Step 7: Set Up Database
 
 ```bash
 # Create initial migration
@@ -124,7 +148,7 @@ fp-admin make-migrations initial
 fp-admin migrate
 ```
 
-## Step 7: Create Admin User
+## Step 8: Create Admin User
 
 ```bash
 # Create a superuser account
@@ -133,7 +157,7 @@ fp-admin createsuperuser
 
 Follow the prompts to create your admin user.
 
-## Step 8: Run the Application
+## Step 9: Run the Application
 
 ```bash
 # Start the development server
@@ -142,17 +166,16 @@ fp-admin run
 
 Visit `http://localhost:8000/admin` to access your admin interface!
 
-## Step 9: Add Sample Data
+## Step 10: Add Sample Data
 
 You can add sample data programmatically:
 
 ```python
 # In a Python shell or script
-from app import engine
 from apps.blog.models import Category, Post
-from sqlmodel import Session
+from fp_admin.core.database import get_session
 
-with Session(engine) as session:
+with get_session() as session:
     # Create categories
     tech = Category(name="Technology", description="Tech-related posts")
     lifestyle = Category(name="Lifestyle", description="Lifestyle posts")
@@ -170,6 +193,21 @@ with Session(engine) as session:
     session.add(post1)
     session.commit()
 ```
+
+## Understanding the Two-Step Approach
+
+fp-admin uses a two-step approach for admin configuration:
+
+### 1. Admin Registration (admin.py)
+Simple model registration that tells fp-admin which models to include in the admin interface:
+
+```python
+class PostAdmin(AdminModel):
+    model = Post
+    label = "Posts"
+```
+
+
 
 ## Advanced Configuration
 
@@ -214,13 +252,6 @@ class RichTextField(FieldView):
             widget="richtext",
             **kwargs
         )
-
-# Usage in views
-def get_form_fields(self):
-    return [
-        FieldView.text_field("title", "Title"),
-        RichTextField("content", "Content"),
-    ]
 ```
 
 ### API Endpoints

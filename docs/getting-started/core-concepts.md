@@ -7,7 +7,8 @@ This guide explains the fundamental concepts behind fp-admin and how they work t
 fp-admin is built around several core concepts that work together to provide a powerful admin interface:
 
 - **Models**: SQLModel-based data models
-- **Views**: Admin interface configurations
+- **Admin Registration**: Simple model registration in admin.py
+- **Views**: Detailed admin interface configurations in views.py
 - **Fields**: Form field definitions and widgets
 - **Apps**: Modular application organization
 - **Services**: Business logic and CRUD operations
@@ -37,37 +38,68 @@ class User(SQLModel, table=True):
 - **Validation**: Built-in validation based on field types and constraints
 - **Relationships**: Support for foreign keys and many-to-many relationships
 
-## Views
+## Admin Registration
 
-Views define how your models appear in the admin interface:
+Admin registration is the simple process of registering your models with the admin interface:
 
 ```python
-from fp_admin.admin.views import AdminView
-from fp_admin.admin.fields import FieldView
+from fp_admin.admin.models import AdminModel
+from .models import User, Post, Category
 
-class UserView(AdminView):
+class UserAdmin(AdminModel):
     model = User
     label = "Users"
-    list_fields = ["id", "username", "email", "is_active", "created_at"]
-    search_fields = ["username", "email"]
-    ordering_fields = ["username", "created_at"]
 
-    def get_form_fields(self):
-        return [
-            FieldView.text_field("username", "Username", required=True),
-            FieldView.email_field("email", "Email", required=True),
-            FieldView.switch_field("is_active", "Active"),
-        ]
+class PostAdmin(AdminModel):
+    model = Post
+    label = "Posts"
+
+class CategoryAdmin(AdminModel):
+    model = Category
+    label = "Categories"
+```
+
+### Admin Registration Features
+
+- **Simple Setup**: Just specify the model and label
+- **Automatic Discovery**: Models are automatically discovered by the admin interface
+- **Clean Separation**: Keeps model registration separate from view configuration
+- **Minimal Code**: Requires only the essential information
+
+## Views
+
+Views define the detailed configuration of how your models appear in the admin interface:
+
+```python
+from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.admin.fields import FieldFactory
+from .models import User # your models.py
+
+class UserFormView(BaseViewBuilder):
+    model = User
+    view_type = "form"
+    name = "UserForm"
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field(
+            "username",
+            "Username",
+            required=True,
+        ),
+        ...
+    ]
+    creation_fields = ["username", "email", "is_active"]
+    allowed_update_fields = ["email", "is_active"]
+
+
+
 ```
 
 ### View Features
 
-- **List Display**: Configure which fields appear in the list view
-- **Search**: Define searchable fields
-- **Ordering**: Specify sortable fields
-- **Form Fields**: Define form field types and widgets
-- **Permissions**: Control access to views
-- **Custom Actions**: Add custom actions to views
+- **fields**: Configure which fields appear in the list view
+- **creation_fields**: Define creation fields
+- **allowed_update_fields**: Specify updated fields
 
 ## Fields
 
@@ -128,15 +160,11 @@ Apps are modular components that organize your code:
 
 ```python
 # apps/blog/apps.py
-from fp_admin.apps import AppConfig
+from fp_admin.admin.apps import AppConfig
 
 class BlogConfig(AppConfig):
     name = "blog"
-    label = "blog"
-    views = [
-        "apps.blog.views.PostView",
-        "apps.blog.views.CategoryView",
-    ]
+    verbose_name = "my blog"
 ```
 
 ### App Structure
@@ -145,18 +173,11 @@ class BlogConfig(AppConfig):
 apps/
 ├── blog/
 │   ├── __init__.py
-│   ├── admin.py
-│   ├── apps.py
-│   ├── models.py
-│   ├── routers.py
-│   └── views.py
-└── auth/
-    ├── __init__.py
-    ├── admin.py
-    ├── apps.py
-    ├── models.py
-    ├── routers.py
-    └── views.py
+│   ├── admin.py          # Simple model registration
+│   ├── apps.py           # App configuration
+│   ├── models.py         # SQLModel definitions
+│   ├── routers.py        # API routes
+│   └── views.py          # Detailed admin configuration
 ```
 
 ### App Features
@@ -170,18 +191,6 @@ apps/
 
 Services handle business logic and CRUD operations:
 
-```python
-from fp_admin.services import ModelService
-
-class UserService(ModelService):
-    model = User
-
-    def create_user(self, data):
-        # Custom business logic
-        user = User(**data)
-        # Additional processing
-        return user
-```
 
 ### Service Features
 
@@ -223,18 +232,8 @@ field = FieldFactory.switch_field("is_active", "Active")
 
 ## Admin Interface
 
-The admin interface is automatically generated from your views:
+The admin interface configs is automatically generated from your views:
 
-### Features
-
-- **Responsive Design**: Works on desktop and mobile
-- **Modern UI**: Clean, modern interface
-- **Search**: Full-text search across models
-- **Filtering**: Advanced filtering options
-- **Sorting**: Sort by any field
-- **Pagination**: Efficient data pagination
-- **Bulk Actions**: Perform actions on multiple items
-- **Export**: Export data in various formats
 
 ### Navigation
 
@@ -258,11 +257,11 @@ fp-admin provides a complete REST API:
 
 ### Features
 
-- **Authentication**: JWT-based authentication
-- **Authorization**: Role-based access control
+- **Authentication**: JWT-based authentication # TODO
+- **Authorization**: Role-based access control # TODO
 - **Validation**: Request/response validation
 - **Error Handling**: Comprehensive error responses
-- **Documentation**: Auto-generated API documentation
+- **Documentation**: Auto-generated API documentation # TODO
 
 ## Database Integration
 
@@ -273,20 +272,16 @@ fp-admin uses SQLModel for database operations:
 - **Multiple Databases**: Support for SQLite, PostgreSQL, MySQL
 - **Migrations**: Alembic-based migration system
 - **Relationships**: Foreign keys and many-to-many
-- **Indexing**: Automatic index creation
 - **Constraints**: Database-level constraints
 
 ### Migration System
 
 ```bash
 # Create migration
-fp-admin make-migrations
+fp-admin make-migrations initial
 
 # Apply migrations
 fp-admin migrate
-
-# Rollback migration
-fp-admin migrate --revision=previous
 ```
 
 ## Authentication & Authorization
