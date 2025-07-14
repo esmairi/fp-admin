@@ -9,9 +9,11 @@ import logging
 from typing import Any, Dict, List, Optional, Type, TypeVar
 
 from sqlalchemy import func
+from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from fp_admin.exceptions import ServiceError
+from fp_admin.services.utils import get_relationship_fields
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +32,7 @@ class QueryBuilderService:
         model_class: Type[T],
         filters: Optional[Dict[str, str | List[str] | List[int]]] = None,
         fields: Optional[List[str]] = None,
+        include_relationships: bool = True,
     ) -> tuple[Any, Any]:
         """Build a query with optional filtering and field selection.
 
@@ -48,8 +51,11 @@ class QueryBuilderService:
                 select_fields = [getattr(model_class, field) for field in fields]
                 query = select(*select_fields)
             else:
-                # Select all fields
+                # Select all fields and include relationships
                 query = select(model_class)
+                # Add relationship loading if enabled
+                if include_relationships:
+                    query = self._add_relationship_loading(query, model_class)
 
             # Build count query
             count_query = select(func.count()).select_from(model_class)
@@ -69,6 +75,42 @@ class QueryBuilderService:
             raise ServiceError(
                 f"Failed to build query for {model_class.__name__}: {e}"
             ) from e
+
+    def _add_relationship_loading(self, query: Any, model_class: Type[T]) -> Any:
+        """Add relationship loading to the query.
+
+        Args:
+            query: The query to add relationship loading to
+            model_class: The model class
+
+        Returns:
+            Query with relationship loading
+        """
+        # Get all relationship fields from the model
+        relationships = get_relationship_fields(model_class)
+        for rel_name in relationships:
+            rel = getattr(model_class, rel_name)
+
+            # Check if this is a self-referential relationship
+            is_self_referential = (
+                hasattr(rel.property, "mapper")
+                and rel.property.mapper.class_ == model_class
+            )
+
+            if is_self_referential:
+                # For self-referential relationships, use selectinload instead of join
+                # This avoids the SQLAlchemy join error
+                self.logger.debug(
+                    "Using selectinload for self-referential relationship '%s' for %s",
+                    rel_name,
+                    model_class.__name__,
+                )
+                query = query.options(selectinload(rel))
+            else:
+                # For regular relationships, use join
+                query = query.join(rel, isouter=True)
+
+        return query
 
     def _apply_filters(
         self,

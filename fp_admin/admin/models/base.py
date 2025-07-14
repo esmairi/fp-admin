@@ -10,12 +10,17 @@ class AdminModelRegistry:
 
     @classmethod
     def register(cls, config: "AdminModel") -> None:
+        module_name = config.model.__module__
+        if "." in module_name:
+            app_name = module_name.split(".")[-2]
+        else:
+            app_name = module_name
         cls._registry.append(
             {
                 "model": config.model,
                 "model_name": config.model.__name__.lower(),
                 "model_label": config.label,
-                "app": config.model.__module__.split(".")[-2],
+                "app": app_name,
             }
         )
 

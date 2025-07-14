@@ -52,7 +52,7 @@ class DatabaseManager:
                 raise DatabaseError(f"Failed to create database engine: {e}") from e
         return self._engine
 
-    def create_tables(self) -> None:
+    def init_db(self) -> None:
         """Create all database tables."""
         try:
             SQLModel.metadata.create_all(self.engine)

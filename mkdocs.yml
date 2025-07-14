@@ -1,0 +1,160 @@
+site_name: fp-admin Documentation
+site_description: Modern FastAPI-based admin framework for SQLModel applications
+site_author: fp-admin Team
+site_url: https://esmairi.github.io/fp-admin/
+
+# Repository
+repo_name: esmairi/fp-admin
+repo_url: https://github.com/esmairi/fp-admin
+edit_uri: edit/main/docs/
+
+# Theme
+theme:
+  name: material
+  language: en
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+  features:
+    - announce.dismiss
+    - content.action.edit
+    - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.instant.queries
+    - navigation.instant.results
+    - navigation.instant.suggestions
+    - navigation.instant.tracking
+    - navigation.instant.typing
+    - navigation.prune
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
+# Plugins
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+  - minify:
+      minify_html: true
+
+# Extensions
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+      combine_header_slug: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# Extra CSS and JS
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+# Navigation
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: getting-started/installation.md
+    - Quick Start: getting-started/quick-start.md
+    - Core Concepts: getting-started/core-concepts.md
+  - User Guide:
+    - Field Types: user-guide/field-types.md
+    - Widgets: user-guide/widgets.md
+    - Admin Models: user-guide/admin-models.md
+    - Authentication: user-guide/authentication.md
+    - CLI Commands: user-guide/cli-commands.md
+  - API Reference:
+    - Models API: api/models.md
+    - Views API: api/views.md
+    - Apps API: api/apps.md
+  - Advanced Topics:
+    - Error Handling: advanced/error-handling.md
+    - Update Endpoints: advanced/update-endpoints.md
+    - Custom Fields: advanced/custom-fields.md
+  - Development:
+    - Contributing: development/contributing.md
+    - Testing: development/testing.md
+    - Building: development/building.md
+
+# Extra
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/esmairi/fp-admin
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/fp-admin/
+  analytics:
+    provider: google
+    property: !ENV GOOGLE_ANALYTICS_KEY

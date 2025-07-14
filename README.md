@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Development Status](https://img.shields.io/badge/status-beta-orange.svg)](https://github.com/esmairi/fp-admin)
 
-> ⚠️ **Beta Version**: This project is currently under active development and is in beta. APIs may change between versions. We recommend testing thoroughly in development environments before using in production.
+> ⚠️ **Beta Version**: This project is currently under active development and is in beta (v0.0.6beta). APIs may change between versions. We recommend testing thoroughly in development environments before using in production.
 
 A modern, FastAPI-based admin framework that provides automatic CRUD interfaces and admin panels for SQLModel-based applications.
 
@@ -30,6 +30,10 @@ The admin interface is powered by a separate React-based UI project:
 - **⚡ FastAPI Integration**: Seamless integration with FastAPI applications
 - **🧪 Comprehensive Testing**: Full test suite with unit, integration, and e2e tests
 - **🎨 Modern UI**: React-based frontend with TypeScript and responsive design
+- **📈 REST API**: Complete REST API for all models with CRUD operations
+- **🔍 Query Builder**: Advanced query building with filtering, pagination, and field selection
+- **📋 Form Validation**: Server-side form validation with custom error handling
+- **🔄 Database Migrations**: Alembic-based migration system for database schema management
 
 ## 📦 Installation
 
@@ -101,6 +105,19 @@ fp-admin run
 
 Visit `http://localhost:8000/admin` to access your admin interface!
 
+## 📖 Documentation
+
+📚 **Complete documentation is available at**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
+
+📖 **GitHub Documentation**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
+
+The documentation includes:
+- **Getting Started**: Installation, quick start, and core concepts
+- **User Guide**: Field types, widgets, admin models, authentication, and CLI commands
+- **API Reference**: Complete REST API documentation
+- **Advanced Topics**: Error handling, custom fields, and advanced configurations
+- **Development**: Contributing guidelines and testing instructions
+
 ## 📚 Core Concepts
 
 ### FieldView System
@@ -140,32 +157,77 @@ class PostAdmin(AdminModel):
 fp-admin supports a wide variety of field types and widgets:
 
 #### Basic Field Types
-- `text` - Regular text input
-- `email` - Email input with validation
-- `password` - Password input
-- `number` - Numeric input
-- `date` - Date picker
-- `checkbox` - Boolean checkbox
-- `textarea` - Multi-line text area
-- `file` - File upload
+- `string`: Single-line text input (default), can be used for email, password, etc.
+- `number`: Integer or numeric input
+- `float`: Floating-point number input
+- `boolean`: Checkbox, switch, or select for true/false values
+- `date`: Date picker
+- `time`: Time picker
+- `datetime`: Date and time picker
+- `choice`: Single-choice selection (dropdown, radio, select)
+- `multichoice`: Multi-select (multiSelect, chips, listBox)
+- `foreignkey`: Foreign key relationship (dropdown, autoComplete)
+- `many_to_many`: Many-to-many relationship (autoComplete, dropdown)
+- `OneToOneField`: One-to-one relationship (autoComplete, dropdown)
+- `file`: File upload
+- `image`: Image upload
+- `json`: JSON editor
+- `color`: Color picker
+- `primarykey`: Primary key field (read-only, usually string or number)
 
-#### Advanced Widgets
-- `select` - Dropdown selection
-- `radio` - Radio button group
-- `checkbox-group` - Multiple checkbox selection
-- `autocomplete` - Autocomplete input
-- `toggle` - Toggle switch
-- `switch` - Switch component
-- `range` - Range slider
-- `slider` - Slider input
-- `richtext` - Rich text editor
-- `markdown` - Markdown editor
+#### Widget Types
+- **Text Inputs**: `text`, `textarea`, `password`
+- **Number Inputs**: `input`, `Slider`
+- **Date/Time**: `calendar`
+- **Boolean**: `Checkbox`, `switch`, `select`
+- **Choice**: `dropdown`, `radio`, `select`
+- **Multi-Choice**: `multiSelect`, `chips`, `listBox`
+- **Relationship**: `dropdown`, `autoComplete`
+- **File/Image**: `upload`, `image`
+- **JSON**: `editor`
+- **Color**: `colorPicker`
 
-#### Multi-Choice Widgets
-- `multi-select` - Multi-select dropdown
-- `tags` - Tag input with chips
-- `chips` - Chip selection
-- `checkbox-group` - Checkbox group for multiple selection
+#### Advanced/Custom Widgets
+- **toggle**: Boolean toggle (alias for switch)
+- **richtext**: Rich text editor (uses textarea widget)
+- **markdown**: Markdown editor (uses textarea widget)
+- **code editor**: JSON/code editor (uses `editor` widget)
+- **selectbutton**: Button-style select (uses dropdown widget)
+
+#### Example Usage
+
+```python
+from fp_admin.admin.fields import FieldView, FieldFactory
+
+# Basic string field
+FieldView(name="title", field_type="string", widget="text")
+
+# Email field
+FieldFactory.email_field("email", "Email Address")
+
+# Number field with slider
+FieldFactory.slider_field("rating", "Rating")
+
+# Boolean switch
+FieldFactory.switch_field("is_active", "Is Active")
+
+# Choice field (dropdown)
+FieldFactory.select_field("status", "Status", options={"choices": [...]})
+
+# Multi-choice chips
+FieldFactory.chips_field("tags", "Tags")
+
+# File upload
+FieldFactory.file_field("attachment", "Attachment")
+
+# JSON editor
+FieldFactory.json_field("seo_data", "SEO Data")
+
+# Color picker
+FieldFactory.color_picker_field("color", "Color")
+```
+
+You can combine any supported field type with a compatible widget for flexible admin forms.
 
 ## 🏗️ Project Structure
 
@@ -178,26 +240,38 @@ fp-admin/
 │   │   ├── models/             # Admin model definitions
 │   │   └── apps/               # App configurations
 │   ├── api/                    # REST API endpoints
+│   │   └── v1/                 # API version 1
+│   │       ├── models_api.py   # Model CRUD endpoints
+│   │       ├── views_api.py    # View API endpoints
+│   │       └── apps_api.py     # App info endpoints
 │   ├── cli/                    # Command-line interface
 │   ├── core/                   # Core functionality
 │   ├── apps/                   # Built-in apps (auth, etc.)
 │   └── services/               # Business logic services
-├── examples/                    # Example applications
-│   └── blog_app/              # Complete blog example
+│       ├── base.py             # Base service class
+│       ├── model_service.py    # Model operations
+│       ├── create_service.py   # Create operations
+│       ├── read_service.py     # Read operations
+│       ├── update_service.py   # Update operations
+│       └── query_builder.py    # Query building
 ├── tests/                      # Test suite
+│   ├── unit/                   # Unit tests
+│   ├── e2e/                    # End-to-end tests
+│   └── fixtures/               # Test fixtures
 ├── docs/                       # Documentation
-└── migrations/                 # Database migrations
+├── migrations/                 # Database migrations
+└── examples/                   # Example applications
 ```
 
 ## 📖 Examples
 
 ### Blog Application
 
-A complete blog application demonstrating fp-admin's capabilities:
+A complete blog application demonstrating fp-admin's capabilities is included in the `examples/blog_project/` directory:
 
 ```bash
 # Navigate to the blog example
-cd examples/blog_app
+cd examples/blog_project
 
 # Install dependencies
 pip install fp-admin sqlmodel fastapi uvicorn

@@ -1,335 +1,434 @@
 """
-Unit tests for widget functionality.
+Unit tests for widget types and configuration.
 
-Tests the widget types, default assignments, and widget-specific features.
+This module tests the widget types, WidgetConfig, and widget validation functionality.
 """
 
-import pytest
+from typing import get_args
 
-from fp_admin.admin.fields import (
+from fp_admin.admin.fields.types import FieldType
+from fp_admin.admin.fields.widgets import (
     DEFAULT_WIDGETS,
-    ChoicesField,
-    FieldChoices,
-    FieldView,
-    MultiChoicesField,
+    VALID_WIDGET_COMBINATIONS,
+    WIDGET_TYPES,
+    WidgetConfig,
     WidgetType,
+    validate_widget_combination,
 )
-from fp_admin.admin.fields.validation import FieldValidation
-
-pytestmark = pytest.mark.unit
 
 
-class TestWidgetTypes:
-    """Test widget type definitions and functionality."""
+class TestWidgetType:
+    """Test cases for WidgetType definitions."""
 
-    def test_widget_type_imports(self) -> None:
-        """Test that widget types can be imported."""
-        assert WidgetType is not None
-        assert DEFAULT_WIDGETS is not None
-        assert isinstance(DEFAULT_WIDGETS, dict)
+    def test_widget_type_values(self):
+        """Test that WidgetType contains all expected values."""
+        for expected_widget in [
+            "text",
+            "textarea",
+            "password",
+            "input",
+            "Slider",
+            "calendar",
+            "Checkbox",
+            "switch",
+            "select",
+            "dropdown",
+            "radio",
+            "multiSelect",
+            "chips",
+            "listBox",
+            "autoComplete",
+            "upload",
+            "image",
+            "editor",
+            "colorPicker",
+        ]:
+            assert expected_widget in WIDGET_TYPES
 
-    def test_default_widgets_mapping(self) -> None:
-        """Test that default widgets mapping is correct."""
-        expected_mappings = {
-            "text": "text",
-            "number": "number",
-            "date": "date",
-            "checkbox": "checkbox",
-            "radio": "radio",
-            "select": "select",
-            "textarea": "textarea",
-            "file": "file",
-            "relationship": "select",
+    def test_widget_type_string_values(self):
+        """Test that all WidgetType values are strings."""
+        for widget_type in WIDGET_TYPES:
+            assert isinstance(widget_type, str)
+            assert len(widget_type) > 0
+
+    def test_widget_type_no_duplicates(self):
+        """Test that WidgetType values are unique."""
+        widget_types = get_args(WidgetType)
+        unique_widgets = set(widget_types)
+        assert len(widget_types) == len(unique_widgets)
+
+    def test_widget_type_categorization(self):
+        """Test that widgets can be categorized by type."""
+        string_widgets = {"text", "textarea", "password"}
+        number_widgets = {"input", "Slider"}
+        date_widgets = {"calendar"}
+        boolean_widgets = {"Checkbox", "switch", "select"}
+        choice_widgets = {"dropdown", "radio", "select"}
+        multichoice_widgets = {"multiSelect", "chips", "listBox"}
+        relationship_widgets = {"dropdown", "autoComplete"}
+        file_widgets = {"upload", "image"}
+        json_widgets = {"editor"}
+        color_widgets = {"colorPicker"}
+
+        # Test that all categories are subsets of WIDGET_TYPES
+        assert string_widgets.issubset(WIDGET_TYPES)
+        assert number_widgets.issubset(WIDGET_TYPES)
+        assert date_widgets.issubset(WIDGET_TYPES)
+        assert boolean_widgets.issubset(WIDGET_TYPES)
+        assert choice_widgets.issubset(WIDGET_TYPES)
+        assert multichoice_widgets.issubset(WIDGET_TYPES)
+        assert relationship_widgets.issubset(WIDGET_TYPES)
+        assert file_widgets.issubset(WIDGET_TYPES)
+        assert json_widgets.issubset(WIDGET_TYPES)
+        assert color_widgets.issubset(WIDGET_TYPES)
+
+
+class TestWidgetConfig:
+    """Test cases for WidgetConfig class."""
+
+    def test_widget_config_creation_default(self):
+        """Test creating WidgetConfig with default values."""
+        config = WidgetConfig()
+
+        assert config.timeOnly is False
+        assert config.showTime is False
+        assert config.mode == "decimal"
+        assert config.preview is False
+        assert config.editor_type == "monaco"
+        assert config.accept is None
+        assert config.min is None
+        assert config.max is None
+        assert config.step is None
+
+    def test_widget_config_creation_with_values(self):
+        """Test creating WidgetConfig with custom values."""
+        config = WidgetConfig(
+            timeOnly=True,
+            showTime=True,
+            mode="currency",
+            preview=True,
+            editor_type="ace",
+            accept="image/*",
+            min=0.0,
+            max=100.0,
+            step=1.0,
+        )
+
+        assert config.timeOnly is True
+        assert config.showTime is True
+        assert config.mode == "currency"
+        assert config.preview is True
+        assert config.editor_type == "ace"
+        assert config.accept == "image/*"
+        assert config.min == 0.0
+        assert config.max == 100.0
+        assert config.step == 1.0
+
+    def test_widget_config_serialization(self):
+        """Test WidgetConfig serialization to dict."""
+        config = WidgetConfig(
+            timeOnly=True,
+            showTime=True,
+            mode="currency",
+            preview=True,
+            editor_type="ace",
+            accept="image/*",
+            min=0.0,
+            max=100.0,
+            step=1.0,
+        )
+
+        config_dict = config.model_dump()
+
+        assert config_dict["timeOnly"] is True
+        assert config_dict["showTime"] is True
+        assert config_dict["mode"] == "currency"
+        assert config_dict["preview"] is True
+        assert config_dict["editor_type"] == "ace"
+        assert config_dict["accept"] == "image/*"
+        assert config_dict["min"] == 0.0
+        assert config_dict["max"] == 100.0
+        assert config_dict["step"] == 1.0
+
+    def test_widget_config_from_dict(self):
+        """Test creating WidgetConfig from dictionary."""
+        config_data = {
+            "timeOnly": True,
+            "showTime": True,
+            "mode": "currency",
+            "preview": True,
+            "editor_type": "ace",
+            "accept": "image/*",
+            "min": 0.0,
+            "max": 100.0,
+            "step": 1.0,
         }
 
-        for field_type, expected_widget in expected_mappings.items():
-            assert DEFAULT_WIDGETS.get(field_type) == expected_widget
+        config = WidgetConfig(**config_data)
 
-    def test_widget_type_validation(self) -> None:
-        """Test that widget types are properly validated."""
-        # Valid widget types
-        valid_widgets = [
-            "text",
-            "email",
-            "password",
-            "search",
-            "tel",
-            "url",
-            "number",
-            "range",
-            "slider",
-            "date",
-            "datetime-local",
-            "time",
-            "month",
-            "week",
-            "select",
-            "radio",
-            "checkbox-group",
-            "autocomplete",
-            "multi-select",
-            "tags",
-            "chips",
-            "file",
-            "image",
-            "document",
-            "textarea",
-            "richtext",
-            "markdown",
-            "checkbox",
-            "toggle",
-            "switch",
-        ]
+        assert config.timeOnly is True
+        assert config.showTime is True
+        assert config.mode == "currency"
+        assert config.preview is True
+        assert config.editor_type == "ace"
+        assert config.accept == "image/*"
+        assert config.min == 0.0
+        assert config.max == 100.0
+        assert config.step == 1.0
 
-        # Test that we can create fields with these widget types
-        for widget in valid_widgets:
-            field = FieldView(
-                name=f"test_{widget}",
-                title=f"Test {widget}",
-                field_type="text",
-                widget=widget,
-            )
-            assert field.widget == widget
-
-
-class TestWidgetFactoryMethods:
-    """Test widget-specific factory methods."""
-
-    def test_select_widget_factories(self) -> None:
-        """Test select widget factory methods."""
-        choices = [
-            FieldChoices(title="Option 1", value="opt1"),
-            FieldChoices(title="Option 2", value="opt2"),
-        ]
-
-        # Test select field
-        select_field = ChoicesField.select_field(
-            name="select", title="Select", choices=choices
+    def test_widget_config_partial_values(self):
+        """Test creating WidgetConfig with partial values."""
+        config = WidgetConfig(
+            timeOnly=True,
+            mode="currency",
+            min=0.0,
         )
-        assert select_field.widget == "select"
-        assert select_field.field_type == "select"
 
-        # Test radio field
-        radio_field = ChoicesField.radio_field(
-            name="radio", title="Radio", choices=choices
+        assert config.timeOnly is True
+        assert config.showTime is False  # Default
+        assert config.mode == "currency"
+        assert config.preview is False  # Default
+        assert config.editor_type == "monaco"  # Default
+        assert config.accept is None  # Default
+        assert config.min == 0.0
+        assert config.max is None  # Default
+        assert config.step is None  # Default
+
+    def test_widget_config_validation(self):
+        """Test WidgetConfig validation."""
+        # Test with valid values
+        config = WidgetConfig(
+            mode="decimal",
+            editor_type="monaco",
+            accept="image/*",
         )
-        assert radio_field.widget == "radio"
-        assert radio_field.field_type == "select"
+        assert config.mode == "decimal"
+        assert config.editor_type == "monaco"
+        assert config.accept == "image/*"
 
-        # Test autocomplete field
-        autocomplete_field = ChoicesField.autocomplete_field(
-            name="autocomplete", title="Autocomplete", choices=choices
-        )
-        assert autocomplete_field.widget == "autocomplete"
-        assert autocomplete_field.field_type == "select"
+    def test_widget_config_equality(self):
+        """Test WidgetConfig equality."""
+        config1 = WidgetConfig(timeOnly=True, mode="currency")
+        config2 = WidgetConfig(timeOnly=True, mode="currency")
+        config3 = WidgetConfig(timeOnly=False, mode="currency")
 
-    def test_multi_select_widget_factories(self) -> None:
-        """Test multi-select widget factory methods."""
-        choices = [
-            FieldChoices(title="Tag 1", value="tag1"),
-            FieldChoices(title="Tag 2", value="tag2"),
-        ]
+        assert config1 == config2
+        assert config1 != config3
 
-        # Test multi-select field
-        multi_select = MultiChoicesField.multi_choice_select_field(
-            name="multi_select", title="Multi Select", choices=choices
-        )
-        assert multi_select.widget == "multi-select"
-        assert multi_select.field_type == "select"
-        assert isinstance(multi_select, MultiChoicesField)
-        assert isinstance(multi_select.choices, list)
 
-        # Test tags field
-        tags_field = MultiChoicesField.multi_choice_tags_field(
-            name="tags", title="Tags", choices=choices
-        )
-        assert tags_field.widget == "tags"
-        assert tags_field.field_type == "select"
-        assert isinstance(tags_field, MultiChoicesField)
-        assert isinstance(tags_field.choices, list)
+class TestDefaultWidgets:
+    """Test cases for DEFAULT_WIDGETS mapping."""
 
-        # Test chips field
-        chips_field = MultiChoicesField.multi_choice_chips_field(
-            name="chips", title="Chips", choices=choices
-        )
-        assert chips_field.widget == "chips"
-        assert chips_field.field_type == "select"
+    def test_default_widgets_contains_all_field_types(self):
+        """Test that DEFAULT_WIDGETS contains all field types."""
+        field_types = get_args(FieldType)
 
-        # Test checkbox group field
-        checkbox_group = MultiChoicesField.checkbox_group_field(
-            name="checkbox_group", title="Checkbox Group", choices=choices
-        )
-        assert checkbox_group.widget == "checkbox-group"
-        assert checkbox_group.field_type == "select"
+        for field_type in field_types:
+            assert field_type in DEFAULT_WIDGETS
 
-    def test_boolean_widget_factories(self) -> None:
-        """Test boolean widget factory methods."""
-        # Test toggle field
-        toggle_field = FieldView.toggle_field(name="toggle", title="Toggle")
-        assert toggle_field.widget == "toggle"
-        assert toggle_field.field_type == "checkbox"
+    def test_default_widgets_values_are_valid_widgets(self):
+        """Test that DEFAULT_WIDGETS values are valid widget types."""
+        for default_widget in DEFAULT_WIDGETS.values():
+            assert default_widget in WIDGET_TYPES
 
-        # Test switch field
-        switch_field = FieldView.switch_field(name="switch", title="Switch")
-        assert switch_field.widget == "switch"
-        assert switch_field.field_type == "checkbox"
+    def test_default_widgets_string_values(self):
+        """Test that all DEFAULT_WIDGETS values are strings."""
+        for field_type, default_widget in DEFAULT_WIDGETS.items():
+            assert isinstance(default_widget, str)
+            assert len(default_widget) > 0
 
-        # Test regular checkbox field
-        checkbox_field = FieldView.checkbox_field(name="checkbox", title="Checkbox")
-        assert checkbox_field.widget == "checkbox"
-        assert checkbox_field.field_type == "checkbox"
+    def test_default_widgets_specific_mappings(self):
+        """Test specific default widget mappings."""
+        assert DEFAULT_WIDGETS["string"] == "text"
+        assert DEFAULT_WIDGETS["number"] == "input"
+        assert DEFAULT_WIDGETS["float"] == "input"
+        assert DEFAULT_WIDGETS["time"] == "calendar"
+        assert DEFAULT_WIDGETS["datetime"] == "calendar"
+        assert DEFAULT_WIDGETS["boolean"] == "Checkbox"
+        assert DEFAULT_WIDGETS["choice"] == "dropdown"
+        assert DEFAULT_WIDGETS["multichoice"] == "multiSelect"
+        assert DEFAULT_WIDGETS["foreignkey"] == "dropdown"
+        assert DEFAULT_WIDGETS["many_to_many"] == "autoComplete"
+        assert DEFAULT_WIDGETS["OneToOneField"] == "dropdown"
+        assert DEFAULT_WIDGETS["date"] == "calendar"
+        assert DEFAULT_WIDGETS["file"] == "upload"
+        assert DEFAULT_WIDGETS["image"] == "image"
+        assert DEFAULT_WIDGETS["json"] == "editor"
+        assert DEFAULT_WIDGETS["color"] == "colorPicker"
+        assert DEFAULT_WIDGETS["primarykey"] == "text"
 
-    def test_number_widget_factories(self) -> None:
-        """Test number widget factory methods."""
-        # Test range field
-        range_field = FieldView.range_field(name="range", title="Range")
-        assert range_field.widget == "range"
-        assert range_field.field_type == "number"
+    def test_default_widgets_no_duplicates(self):
+        """Test that DEFAULT_WIDGETS keys are unique."""
+        keys = list(DEFAULT_WIDGETS.keys())
+        unique_keys = set(keys)
+        assert len(keys) == len(unique_keys)
 
-        # Test slider field
-        slider_field = FieldView.slider_field(name="slider", title="Slider")
-        assert slider_field.widget == "slider"
-        assert slider_field.field_type == "number"
 
-        # Test regular number field
-        number_field = FieldView.number_field(name="number", title="Number")
-        assert number_field.widget == "number"
-        assert number_field.field_type == "number"
+class TestValidWidgetCombinations:
+    """Test cases for VALID_WIDGET_COMBINATIONS mapping."""
 
-    def test_textarea_widget_factories(self) -> None:
-        """Test textarea widget factory methods."""
-        # Test richtext field
-        richtext_field = FieldView.richtext_field(name="richtext", title="Rich Text")
-        assert richtext_field.widget == "richtext"
-        assert richtext_field.field_type == "textarea"
+    def test_valid_widget_combinations_contains_all_field_types(self):
+        """Test that VALID_WIDGET_COMBINATIONS contains all field types."""
+        field_types = get_args(FieldType)
 
-        # Test markdown field
-        markdown_field = FieldView.markdown_field(name="markdown", title="Markdown")
-        assert markdown_field.widget == "markdown"
-        assert markdown_field.field_type == "textarea"
+        for field_type in field_types:
+            assert field_type in VALID_WIDGET_COMBINATIONS
 
-        # Test regular textarea field
-        textarea_field = FieldView.textarea_field(name="textarea", title="Textarea")
-        assert textarea_field.widget == "textarea"
-        assert textarea_field.field_type == "textarea"
+    def test_valid_widget_combinations_values_are_lists(self):
+        """Test that VALID_WIDGET_COMBINATIONS values are lists."""
+        for field_type, valid_widgets in VALID_WIDGET_COMBINATIONS.items():
+            assert isinstance(valid_widgets, list)
+
+    def test_valid_widget_combinations_values_are_valid_widgets(self):
+        """Test that VALID_WIDGET_COMBINATIONS values are valid widget types."""
+        for widgets in VALID_WIDGET_COMBINATIONS.values():
+            for widget in widgets:
+                assert widget in WIDGET_TYPES
+
+    def test_valid_widget_combinations_specific_mappings(self):
+        """Test specific valid widget combinations."""
+        # String field can use text, textarea, password
+        assert "text" in VALID_WIDGET_COMBINATIONS["string"]
+        assert "textarea" in VALID_WIDGET_COMBINATIONS["string"]
+        assert "password" in VALID_WIDGET_COMBINATIONS["string"]
+
+        # Number field can use input, Slider
+        assert "input" in VALID_WIDGET_COMBINATIONS["number"]
+        assert "Slider" in VALID_WIDGET_COMBINATIONS["number"]
+
+        # Boolean field can use Checkbox, switch, select
+        assert "Checkbox" in VALID_WIDGET_COMBINATIONS["boolean"]
+        assert "switch" in VALID_WIDGET_COMBINATIONS["boolean"]
+        assert "select" in VALID_WIDGET_COMBINATIONS["boolean"]
+
+    def test_valid_widget_combinations_no_duplicates(self):
+        """Test that VALID_WIDGET_COMBINATIONS keys are unique."""
+        keys = list(VALID_WIDGET_COMBINATIONS.keys())
+        unique_keys = set(keys)
+        assert len(keys) == len(unique_keys)
+
+    def test_valid_widget_combinations_no_duplicate_widgets(self):
+        """Test that each field type's valid widgets list has no duplicates."""
+        for field_type, valid_widgets in VALID_WIDGET_COMBINATIONS.items():
+            unique_widgets = set(valid_widgets)
+            assert len(valid_widgets) == len(unique_widgets)
+
+
+class TestValidateWidgetCombination:
+    """Test cases for validate_widget_combination function."""
+
+    def test_validate_widget_combination_valid_combinations(self):
+        """Test validate_widget_combination with valid combinations."""
+        # String field with valid widgets
+        assert validate_widget_combination("string", "text") is True
+        assert validate_widget_combination("string", "textarea") is True
+        assert validate_widget_combination("string", "password") is True
+
+        # Number field with valid widgets
+        assert validate_widget_combination("number", "input") is True
+        assert validate_widget_combination("number", "Slider") is True
+
+        # Boolean field with valid widgets
+        assert validate_widget_combination("boolean", "Checkbox") is True
+        assert validate_widget_combination("boolean", "switch") is True
+        assert validate_widget_combination("boolean", "select") is True
+
+    def test_validate_widget_combination_invalid_combinations(self):
+        """Test validate_widget_combination with invalid combinations."""
+        # String field with invalid widgets
+        assert validate_widget_combination("string", "Slider") is False
+        assert validate_widget_combination("string", "Checkbox") is False
+
+        # Number field with invalid widgets
+        assert validate_widget_combination("number", "textarea") is False
+        assert validate_widget_combination("number", "password") is False
+
+        # Boolean field with invalid widgets
+        assert validate_widget_combination("boolean", "text") is False
+        assert validate_widget_combination("boolean", "input") is False
+
+    def test_validate_widget_combination_unknown_field_type(self):
+        """Test validate_widget_combination with unknown field type."""
+        # Unknown field type should return empty list, so any widget should be invalid
+        assert validate_widget_combination("unknown_type", "text") is False
+        assert validate_widget_combination("unknown_type", "input") is False
+
+    def test_validate_widget_combination_all_field_types(self):
+        """Test validate_widget_combination for all field types."""
+        field_types = get_args(FieldType)
+
+        for field_type in field_types:
+            # Test with default widget for this field type
+            default_widget = DEFAULT_WIDGETS[field_type]
+            assert validate_widget_combination(field_type, default_widget) is True
+
+            # Test with invalid widget
+            assert validate_widget_combination(field_type, "invalid_widget") is False
+
+    def test_validate_widget_combination_edge_cases(self):
+        """Test validate_widget_combination with edge cases."""
+        # Empty string field type
+        assert validate_widget_combination("", "text") is False
+
+        # Empty string widget
+        assert validate_widget_combination("string", "") is False
+
+        # None values (should handle gracefully)
+        assert validate_widget_combination(None, "text") is False  # type: ignore
+        assert validate_widget_combination("string", None) is False  # type: ignore
+
+    def test_validate_widget_combination_case_sensitivity(self):
+        """Test validate_widget_combination case sensitivity."""
+        # Widget names are case-sensitive
+        assert validate_widget_combination("string", "Text") is False  # Wrong case
+        assert validate_widget_combination("string", "TEXT") is False  # Wrong case
+        assert validate_widget_combination("string", "text") is True  # Correct case
+
+        # Field type names are case-sensitive
+        assert validate_widget_combination("String", "text") is False  # Wrong case
+        assert validate_widget_combination("STRING", "text") is False  # Wrong case
+        assert validate_widget_combination("string", "text") is True  # Correct case
 
 
 class TestWidgetIntegration:
-    """Test widget integration with other field features."""
+    """Integration tests for widget functionality."""
 
-    def test_widget_with_validation(self) -> None:
-        """Test that widgets work with validation."""
-        field = FieldView.toggle_field(
-            name="toggle", title="Toggle", validation=FieldValidation(required=True)
-        )
+    def test_widget_config_with_field_validation(self):
+        """Test WidgetConfig with field validation scenarios."""
+        # Test time field configuration
+        time_config = WidgetConfig(timeOnly=True, showTime=False)
+        assert time_config.timeOnly is True
+        assert time_config.showTime is False
 
-        assert field.widget == "toggle"
-        assert field.validation is not None
-        assert field.validation.required is True
+        # Test datetime field configuration
+        datetime_config = WidgetConfig(showTime=True, timeOnly=False)
+        assert datetime_config.showTime is True
+        assert datetime_config.timeOnly is False
 
-    def test_widget_with_options(self) -> None:
-        """Test that widgets work with options."""
-        choices = [
-            FieldChoices(title="Yes", value=True),
-            FieldChoices(title="No", value=False),
-        ]
+        # Test number field configuration
+        number_config = WidgetConfig(min=0.0, max=100.0, step=1.0)
+        assert number_config.min == 0.0
+        assert number_config.max == 100.0
+        assert number_config.step == 1.0
 
-        field = ChoicesField.radio_field(
-            name="radio", title="Radio", choices=choices, required=True
-        )
+    def test_widget_validation_with_config(self):
+        """Test widget validation with configuration."""
+        # Test valid combinations with config
+        assert validate_widget_combination("time", "calendar") is True
+        assert validate_widget_combination("datetime", "calendar") is True
+        assert validate_widget_combination("number", "input") is True
+        assert validate_widget_combination("number", "Slider") is True
 
-        assert field.widget == "radio"
-        assert len(field.choices) == 2
-        assert field.required is True
+    def test_default_widgets_consistency(self):
+        """Test that default widgets are consistent with valid combinations."""
+        for field_type, default_widget in DEFAULT_WIDGETS.items():
+            # Default widget should be in valid combinations for that field type
+            assert validate_widget_combination(field_type, default_widget) is True
 
-    def test_widget_with_constraints(self) -> None:
-        """Test that widgets work with selection constraints."""
-        choices = [
-            FieldChoices(title="Tag 1", value="tag1"),
-            FieldChoices(title="Tag 2", value="tag2"),
-            FieldChoices(title="Tag 3", value="tag3"),
-        ]
-
-        field = MultiChoicesField.multi_choice_tags_field(
-            name="tags",
-            title="Tags",
-            choices=choices,
-            min_selections=1,
-            max_selections=2,
-            required=True,
-        )
-
-        assert field.widget == "tags"
-        assert field.min_selections == 1
-        assert field.max_selections == 2
-
-    def test_widget_serialization(self) -> None:
-        """Test that widgets are properly serialized."""
-        field = FieldView.range_field(
-            name="range", title="Range", help_text="Select a range"
-        )
-
-        data = field.model_dump()
-        assert data["widget"] == "range"
-        assert data["field_type"] == "number"
-        assert data["help_text"] == "Select a range"
-
-    def test_widget_from_dict(self) -> None:
-        """Test that widgets can be created from dict."""
-        data = {
-            "name": "custom_field",
-            "title": "Custom Field",
-            "field_type": "text",
-            "widget": "search",
-            "placeholder": "Search...",
-        }
-
-        field = FieldView(**data)
-        assert field.widget == "search"
-        assert field.field_type == "text"
-        assert field.placeholder == "Search..."
-
-
-class TestWidgetValidation:
-    """Test widget-specific validation."""
-
-    def test_multi_choice_widget_validation(self) -> None:
-        """Test validation for multi-choice widgets."""
-        choices = [
-            FieldChoices(title="Tag 1", value="tag1"),
-            FieldChoices(title="Tag 2", value="tag2"),
-        ]
-
-        field = MultiChoicesField.multi_choice_tags_field(
-            name="tags",
-            title="Tags",
-            choices=choices,
-            min_selections=1,
-            max_selections=2,
-            required=True,
-        )
-
-        # Valid selections
-        assert field.validate_value(["tag1"]) == []
-        assert field.validate_value(["tag1", "tag2"]) == []
-
-        # Invalid selections
-        assert len(field.validate_value([])) > 0  # Too few
-        assert (
-            len(field.validate_value(["tag1", "tag2", "tag1"])) > 0
-        )  # Too many (3 > max_selections=2, even with duplicates)
-        assert len(field.validate_value(["invalid"])) > 0  # Invalid choice
-
-    def test_widget_default_behavior(self) -> None:
-        """Test that widgets have correct default behavior."""
-        # Test that fields get default widgets when not specified
-        text_field = FieldView(name="text", title="Text", field_type="text")
-        assert text_field.widget == "text"
-
-        number_field = FieldView(name="number", title="Number", field_type="number")
-        assert number_field.widget == "number"
-
-        checkbox_field = FieldView(
-            name="checkbox", title="Checkbox", field_type="checkbox"
-        )
-        assert checkbox_field.widget == "checkbox"
+    def test_widget_type_completeness(self):
+        """Test that all widget types are used in valid combinations."""
+        # All widget types should be used somewhere
+        used_widgets = set()
+        for widgets in VALID_WIDGET_COMBINATIONS.values():
+            used_widgets.update(widgets)
+        assert WIDGET_TYPES.issubset(used_widgets)

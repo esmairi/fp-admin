@@ -1,0 +1,232 @@
+/* Custom styles for fp-admin documentation */
+
+/* Code blocks */
+.md-typeset code {
+    background-color: #f5f5f5;
+    border-radius: 3px;
+    padding: 2px 4px;
+    font-size: 0.85em;
+}
+
+/* Syntax highlighting */
+.md-typeset pre > code {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 16px;
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+/* Tables */
+.md-typeset table {
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.md-typeset table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Admonitions */
+.md-typeset .admonition {
+    border-radius: 6px;
+    border-left: 4px solid;
+}
+
+.md-typeset .admonition-title {
+    font-weight: 600;
+}
+
+/* Navigation */
+.md-nav__link {
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+
+.md-nav__link:hover {
+    background-color: rgba(0,0,0,0.05);
+}
+
+/* Search */
+.md-search__input {
+    border-radius: 20px;
+}
+
+/* Buttons */
+.md-button {
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.md-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+/* Cards */
+.md-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.md-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+}
+
+/* Feature badges */
+.feature-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.feature-badge.new {
+    background-color: #28a745;
+    color: white;
+}
+
+.feature-badge.beta {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.feature-badge.deprecated {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Code examples */
+.code-example {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.code-example-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #495057;
+}
+
+/* Widget examples */
+.widget-example {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+    background-color: #fff;
+}
+
+.widget-example-title {
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #495057;
+}
+
+/* Configuration tables */
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.config-table th,
+.config-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.config-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Best practices */
+.best-practice {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.best-practice-title {
+    font-weight: 600;
+    color: #155724;
+    margin-bottom: 8px;
+}
+
+.warning {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 6px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.warning-title {
+    font-weight: 600;
+    color: #856404;
+    margin-bottom: 8px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .md-typeset table {
+        font-size: 0.8em;
+    }
+
+    .md-typeset pre > code {
+        font-size: 0.8em;
+        padding: 12px;
+    }
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] .md-typeset code {
+    background-color: #2d3748;
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre > code {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+
+[data-md-color-scheme="slate"] .md-typeset table th {
+    background-color: #2d3748;
+    border-bottom-color: #4a5568;
+}
+
+[data-md-color-scheme="slate"] .code-example {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+
+[data-md-color-scheme="slate"] .widget-example {
+    background-color: #2d3748;
+    border-color: #4a5568;
+}
+
+[data-md-color-scheme="slate"] .best-practice {
+    background-color: #22543d;
+    border-color: #38a169;
+}
+
+[data-md-color-scheme="slate"] .warning {
+    background-color: #744210;
+    border-color: #d69e2e;
+}

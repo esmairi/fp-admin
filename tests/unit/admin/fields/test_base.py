@@ -1,470 +1,280 @@
 """
 Unit tests for base field classes.
 
-Tests the FieldView class and its factory methods.
+This module tests the core field functionality including FieldView, FieldViewKwargs,
+and related base classes.
 """
 
 import pytest
 from pydantic import ValidationError
+from sqlmodel import SQLModel
 
-from fp_admin.admin.fields.base import FieldView
-from fp_admin.admin.fields.validation import FieldValidation
-from fp_admin.admin.fields.widgets import DEFAULT_WIDGETS
+from fp_admin.admin.fields.base import FieldView, get_default_widget
+from fp_admin.admin.fields.errors import FieldError
+from fp_admin.admin.fields.field_validator import FieldValidation
 
-pytestmark = pytest.mark.unit
+
+class TestGetDefaultWidget:
+    """Test cases for get_default_widget function."""
+
+    def test_get_default_widget_string(self):
+        """Test getting default widget for string field type."""
+        widget = get_default_widget("string")
+        assert widget == "text"
+
+    def test_get_default_widget_number(self):
+        """Test getting default widget for number field type."""
+        widget = get_default_widget("number")
+        assert widget == "input"
+
+    def test_get_default_widget_boolean(self):
+        """Test getting default widget for boolean field type."""
+        widget = get_default_widget("boolean")
+        assert widget == "Checkbox"
+
+    def test_get_default_widget_unknown_type(self):
+        """Test getting default widget for unknown field type."""
+        widget = get_default_widget("unknown_type")
+        assert widget == "text"  # Default fallback
 
 
 class TestFieldView:
-    """Test cases for FieldView."""
+    """Test cases for FieldView class."""
 
-    def test_field_view_creation(self) -> None:
-        """Test basic FieldView creation."""
-        field = FieldView(name="test_field", title="Test Field", field_type="text")
-
-        assert field.name == "test_field"
-        assert field.title == "Test Field"
-        assert field.field_type == "text"
-        assert field.required is False
-        assert field.readonly is False
-        assert field.disabled is False
-        assert field.widget == "text"  # Default widget
-
-    def test_field_view_required_fields(self) -> None:
-        """Test that name, title, and field_type are required fields."""
-        field = FieldView(
-            name="required_test", title="Required Test", field_type="number"
-        )
-
-        assert field.name == "required_test"
-        assert field.title == "Required Test"
-        assert field.field_type == "number"
-        assert field.widget == "number"  # Default widget
-
-    def test_field_view_missing_name(self) -> None:
-        """Test that name field is required."""
-        with pytest.raises(ValidationError):
-            FieldView(title="Test", field_type="text")
-
-    def test_field_view_missing_field_type(self) -> None:
-        """Test that field_type field is required."""
-        with pytest.raises(ValidationError):
-            FieldView(name="test", title="Test")
-
-    def test_field_view_optional_fields(self) -> None:
-        """Test that optional fields work correctly."""
-        field = FieldView(
-            name="test",
-            title="Test",
-            field_type="text",
-            widget="email",  # Custom widget
-            help_text="Help text",
-            placeholder="Enter value",
-            required=True,
-            readonly=True,
-            disabled=True,
-            default_value="default",
-        )
-
-        assert field.widget == "email"
-        assert field.help_text == "Help text"
-        assert field.placeholder == "Enter value"
-        assert field.required is True
-        assert field.readonly is True
-        assert field.disabled is True
-        assert field.default_value == "default"
-
-    def test_field_view_validation_field(self) -> None:
-        """Test that validation field works correctly."""
-        validation = FieldValidation(required=True, min_length=3)
-        field = FieldView(
-            name="test", title="Test", field_type="text", validation=validation
-        )
-
-        assert field.validation is not None
-        assert field.validation.required is True
-        assert field.validation.min_length == 3
-
-
-class TestFieldViewWidgets:
-    """Test cases for FieldView widget functionality."""
-
-    def test_default_widget_assignment(self) -> None:
-        """Test that default widgets are assigned correctly."""
-        # Test all field types have default widgets
-        field_types = [
-            "text",
-            "number",
-            "date",
-            "checkbox",
-            "radio",
-            "select",
-            "textarea",
-            "file",
-            "relationship",
-        ]
-
-        for field_type in field_types:
-            field = FieldView(
-                name=f"test_{field_type}",
-                title=f"Test {field_type}",
-                field_type=field_type,
-            )
-
-            if field_type in DEFAULT_WIDGETS:
-                assert field.widget == DEFAULT_WIDGETS[field_type]
-            else:
-                assert field.widget == "text"  # Fallback default
-
-    def test_custom_widget_assignment(self) -> None:
-        """Test that custom widgets can be assigned."""
-        field = FieldView(
-            name="custom_field",
-            title="Custom Field",
-            field_type="text",
-            widget="search",
-        )
-
-        assert field.widget == "search"
-        assert field.field_type == "text"
-
-    def test_widget_specific_factory_methods(self) -> None:
-        """Test widget-specific factory methods."""
-        # Test toggle field
-        toggle_field = FieldView.toggle_field(name="toggle", title="Toggle Switch")
-        assert toggle_field.widget == "toggle"
-        assert toggle_field.field_type == "checkbox"
-
-        # Test switch field
-        switch_field = FieldView.switch_field(name="switch", title="Switch")
-        assert switch_field.widget == "switch"
-        assert switch_field.field_type == "checkbox"
-
-        # Test range field
-        range_field = FieldView.range_field(name="range", title="Range Slider")
-        assert range_field.widget == "range"
-        assert range_field.field_type == "number"
-
-        # Test slider field
-        slider_field = FieldView.slider_field(name="slider", title="Slider")
-        assert slider_field.widget == "slider"
-        assert slider_field.field_type == "number"
-
-        # Test richtext field
-        richtext_field = FieldView.richtext_field(name="richtext", title="Rich Text")
-        assert richtext_field.widget == "richtext"
-        assert richtext_field.field_type == "textarea"
-
-        # Test markdown field
-        markdown_field = FieldView.markdown_field(name="markdown", title="Markdown")
-        assert markdown_field.widget == "markdown"
-        assert markdown_field.field_type == "textarea"
-
-    def test_widget_with_validation(self) -> None:
-        """Test that widgets work with validation."""
-        field = FieldView.toggle_field(
-            name="toggle", title="Toggle", validation=FieldValidation(required=True)
-        )
-
-        assert field.widget == "toggle"
-        assert field.field_type == "checkbox"
-        assert field.validation is not None
-        assert field.validation.required is True
-
-    def test_widget_serialization(self) -> None:
-        """Test that widgets are properly serialized."""
-        field = FieldView.range_field(
-            name="range", title="Range", min_selections=1, max_selections=10
-        )
-
-        data = field.model_dump()
-        assert data["widget"] == "range"
-        assert data["field_type"] == "number"
-
-
-class TestFieldViewFactoryMethods:
-    """Test cases for FieldView factory methods."""
-
-    def test_text_field_factory(self) -> None:
-        """Test text_field factory method."""
-        field = FieldView.text_field(
-            name="username",
-            title="Username",
-            required=True,
-            placeholder="Enter username",
-        )
-
-        assert field.name == "username"
-        assert field.title == "Username"
-        assert field.field_type == "text"
-        assert field.required is True
-        assert field.placeholder == "Enter username"
-
-    def test_email_field_factory(self) -> None:
-        """Test email_field factory method."""
-        field = FieldView.email_field(
-            name="email", title="Email Address", required=True
-        )
-
-        assert field.name == "email"
-        assert field.title == "Email Address"
-        assert field.field_type == "text"
-        assert field.required is True
-        assert field.validation is not None
-        assert field.validation.pattern is not None
-
-    def test_password_field_factory(self) -> None:
-        """Test password_field factory method."""
-        field = FieldView.password_field(
-            name="password", title="Password", required=True
-        )
-
-        assert field.name == "password"
-        assert field.title == "Password"
-        assert field.field_type == "text"
-        assert field.required is True
-
-    def test_number_field_factory(self) -> None:
-        """Test number_field factory method."""
-        field = FieldView.number_field(name="age", title="Age", required=True)
-
-        assert field.name == "age"
-        assert field.title == "Age"
-        assert field.field_type == "number"
-        assert field.required is True
-
-    def test_date_field_factory(self) -> None:
-        """Test date_field factory method."""
-        field = FieldView.date_field(name="birth_date", title="Birth Date")
-
-        assert field.name == "birth_date"
-        assert field.title == "Birth Date"
-        assert field.field_type == "date"
-
-    def test_checkbox_field_factory(self) -> None:
-        """Test checkbox_field factory method."""
-        field = FieldView.checkbox_field(
-            name="newsletter", title="Subscribe to Newsletter", default_value=True
-        )
-
-        assert field.name == "newsletter"
-        assert field.title == "Subscribe to Newsletter"
-        assert field.field_type == "checkbox"
-        assert field.default_value is True
-
-    def test_textarea_field_factory(self) -> None:
-        """Test textarea_field factory method."""
-        field = FieldView.textarea_field(
-            name="bio", title="Biography", placeholder="Tell us about yourself"
-        )
-
-        assert field.name == "bio"
-        assert field.title == "Biography"
-        assert field.field_type == "textarea"
-        assert field.placeholder == "Tell us about yourself"
-
-    def test_file_field_factory(self) -> None:
-        """Test file_field factory method."""
-        field = FieldView.file_field(name="avatar", title="Profile Picture")
-
-        assert field.name == "avatar"
-        assert field.title == "Profile Picture"
-        assert field.field_type == "file"
-
-
-class TestFieldViewValidation:
-    """Test cases for FieldView validation methods."""
-
-    def test_validate_value_required_field_empty(self) -> None:
-        """Test validation of required field with empty value."""
-        field = FieldView(name="test", title="Test", field_type="text", required=True)
-
-        errors = field.validate_value("")
-        assert len(errors) == 1
-        assert "required" in errors[0].lower()
-
-    def test_validate_value_required_field_none(self) -> None:
-        """Test validation of required field with None value."""
-        field = FieldView(name="test", title="Test", field_type="text", required=True)
-
-        errors = field.validate_value(None)
-        assert len(errors) == 1
-        assert "required" in errors[0].lower()
-
-    def test_validate_value_optional_field_empty(self) -> None:
-        """Test validation of optional field with empty value."""
-        field = FieldView(name="test", title="Test", field_type="text", required=False)
-
-        errors = field.validate_value("")
-        assert len(errors) == 0
-
-    def test_validate_value_min_length(self) -> None:
-        """Test validation with min_length rule."""
-        validation = FieldValidation(min_length=3)
-        field = FieldView(
-            name="test", title="Test", field_type="text", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value("abc")
-        assert len(errors) == 0
-
-        # Test invalid value
-        errors = field.validate_value("ab")
-        assert len(errors) == 1
-        assert "minimum length" in errors[0].lower()
-
-    def test_validate_value_max_length(self) -> None:
-        """Test validation with max_length rule."""
-        validation = FieldValidation(max_length=5)
-        field = FieldView(
-            name="test", title="Test", field_type="text", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value("abc")
-        assert len(errors) == 0
-
-        # Test invalid value
-        errors = field.validate_value("abcdef")
-        assert len(errors) == 1
-        assert "maximum length" in errors[0].lower()
-
-    def test_validate_value_min_value(self) -> None:
-        """Test validation with min_value rule."""
-        validation = FieldValidation(min_value=0)
-        field = FieldView(
-            name="test", title="Test", field_type="number", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value(5)
-        assert len(errors) == 0
-
-        # Test invalid value
-        errors = field.validate_value(-1)
-        assert len(errors) == 1
-        assert "minimum value" in errors[0].lower()
-
-    def test_validate_value_max_value(self) -> None:
-        """Test validation with max_value rule."""
-        validation = FieldValidation(max_value=100)
-        field = FieldView(
-            name="test", title="Test", field_type="number", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value(50)
-        assert len(errors) == 0
-
-        # Test invalid value
-        errors = field.validate_value(150)
-        assert len(errors) == 1
-        assert "maximum value" in errors[0].lower()
-
-    def test_validate_value_pattern(self) -> None:
-        """Test validation with pattern rule."""
-        validation = FieldValidation(pattern=r"^[a-zA-Z]+$")
-        field = FieldView(
-            name="test", title="Test", field_type="text", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value("abc")
-        assert len(errors) == 0
-
-        # Test invalid value
-        errors = field.validate_value("abc123")
-        assert len(errors) == 1
-        assert "invalid format" in errors[0].lower()
-
-    def test_validate_value_multiple_rules(self) -> None:
-        """Test validation with multiple rules."""
-        validation = FieldValidation(min_length=3, max_length=10, pattern=r"^[a-z]+$")
-        field = FieldView(
-            name="test", title="Test", field_type="text", validation=validation
-        )
-
-        # Test valid value
-        errors = field.validate_value("abcde")
-        assert len(errors) == 0
-
-        # Test invalid value (too short)
-        errors = field.validate_value("ab")
-        assert len(errors) == 1
-        assert "minimum length" in errors[0].lower()
-
-        # Test invalid value (too long)
-        errors = field.validate_value("abcdefghijk")
-        assert len(errors) == 1
-        assert "maximum length" in errors[0].lower()
-
-        # Test invalid value (wrong pattern)
-        errors = field.validate_value("ABC123")
-        assert len(errors) == 1
-        assert "invalid format" in errors[0].lower()
-
-    def test_validate_value_email_pattern(self) -> None:
-        """Test email validation pattern."""
-        field = FieldView.email_field("email", "Email")
-
-        # Test valid emails
-        valid_emails = [
-            "test@example.com",
-            "user.name@domain.co.uk",
-            "user+tag@example.org",
-        ]
-
-        for email in valid_emails:
-            errors = field.validate_value(email)
-            assert len(errors) == 0, f"Email {email} should be valid"
-
-        # Test invalid emails
-        invalid_emails = ["invalid-email", "@example.com", "user@", "user@.com"]
-
-        for email in invalid_emails:
-            errors = field.validate_value(email)
-            assert len(errors) > 0, f"Email {email} should be invalid"
-
-
-class TestFieldViewSerialization:
-    """Test cases for FieldView serialization."""
-
-    def test_field_view_serialization(self) -> None:
-        """Test that FieldView can be serialized to dict."""
+    def test_field_view_creation_basic(self):
+        """Test creating a basic FieldView."""
         field = FieldView(
             name="test_field",
             title="Test Field",
-            field_type="text",
-            required=True,
-            help_text="Help text",
-            placeholder="Enter value",
-            default_value="default",
+            field_type="string",
         )
-
-        data = field.model_dump()
-
-        assert data["name"] == "test_field"
-        assert data["title"] == "Test Field"
-        assert data["field_type"] == "text"
-        assert data["required"] is True
-        assert data["help_text"] == "Help text"
-        assert data["placeholder"] == "Enter value"
-        assert data["default_value"] == "default"
-
-    def test_field_view_from_dict(self) -> None:
-        """Test that FieldView can be created from dict."""
-        data = {
-            "name": "test_field",
-            "title": "Test Field",
-            "field_type": "number",
-            "required": True,
-            "help_text": "Help text",
-        }
-
-        field = FieldView(**data)
 
         assert field.name == "test_field"
         assert field.title == "Test Field"
-        assert field.field_type == "number"
-        assert field.required is True
+        assert field.field_type == "string"
+        assert field.widget == "text"  # Default widget
+        assert field.required is False
+        assert field.readonly is False
+        assert field.disabled is False
+        assert field.is_primary_key is False
+
+    def test_field_view_creation_with_all_options(self):
+        """Test creating FieldView with all options."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            help_text="Help text",
+            widget="textarea",
+            required=True,
+            readonly=True,
+            disabled=True,
+            placeholder="Enter text",
+            default_value="default",
+            options={"key": "value"},
+            is_primary_key=True,
+        )
+
+        assert field.name == "test_field"
+        assert field.title == "Test Field"
+        assert field.field_type == "string"
         assert field.help_text == "Help text"
+        assert field.widget == "textarea"
+        assert field.required is True
+        assert field.readonly is True
+        assert field.disabled is True
+        assert field.placeholder == "Enter text"
+        assert field.default_value == "default"
+        assert field.options == {"key": "value"}
+        assert field.is_primary_key is True
+
+    def test_field_view_default_widget_assignment(self):
+        """Test that default widget is assigned when not provided."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="number",
+        )
+
+        assert field.widget == "input"  # Default for number
+
+    def test_field_view_explicit_none_widget(self):
+        """Test that widget can be explicitly set to None."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            widget=None,
+        )
+
+        assert field.widget is None
+
+    def test_field_view_validation_creation(self):
+        """Test creating FieldView with validation."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            validators=FieldValidation(required=True, min_length=5, max_length=100),
+        )
+
+        assert field.validators is not None
+        assert field.validators.required is True
+        assert field.validators.min_length == 5
+        assert field.validators.max_length == 100
+
+    def test_field_view_custom_validator(self):
+        """Test creating FieldView with custom validator."""
+
+        def custom_validator(value):
+            if value == "invalid":
+                return FieldError(code="CUSTOM", message="Invalid value")
+            return None
+
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            custom_validator=custom_validator,
+        )
+
+        assert field.custom_validator is not None
+        assert field.custom_validator("valid") is None
+        assert field.custom_validator("invalid") is not None
+
+    def test_field_view_model_class(self):
+        """Test creating FieldView with model class."""
+
+        class TestModel(SQLModel):
+            pass
+
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            model_class=TestModel,
+        )
+
+        assert field.model_class == TestModel
+
+    def test_field_view_validation_method(self):
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            validators=FieldValidation(required=True, min_length=3),
+        )
+        errors = field.validate_value("")
+        error_codes = {e.code for e in errors}
+        assert len(errors) == 2
+        assert "REQUIRED" in error_codes
+        assert "MIN_LENGTH" in error_codes
+
+    def test_field_view_validation_with_custom_validator(self):
+        """Test FieldView validation with custom validator."""
+
+        def custom_validator(value):
+            if value == "invalid":
+                return FieldError(code="CUSTOM", message="Invalid value")
+            return None
+
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            custom_validator=custom_validator,
+        )
+
+        # Test valid value
+        errors = field.validate_value("valid")
+        assert len(errors) == 0
+
+        # Test invalid value
+        errors = field.validate_value("invalid")
+        assert len(errors) == 1
+        assert errors[0].code == "CUSTOM"
+
+    def test_field_view_serialization(self):
+        """Test FieldView serialization to dict."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+            help_text="Help text",
+            widget="textarea",
+            required=True,
+            readonly=True,
+            disabled=True,
+            placeholder="Enter text",
+            default_value="default",
+            options={"key": "value"},
+            is_primary_key=True,
+        )
+
+        field_dict = field.model_dump()
+
+        assert field_dict["name"] == "test_field"
+        assert field_dict["title"] == "Test Field"
+        assert field_dict["field_type"] == "string"
+        assert field_dict["help_text"] == "Help text"
+        assert field_dict["widget"] == "textarea"
+        assert field_dict["required"] is True
+        assert field_dict["readonly"] is True
+        assert field_dict["disabled"] is True
+        assert field_dict["placeholder"] == "Enter text"
+        assert field_dict["default_value"] == "default"
+        assert field_dict["options"] == {"key": "value"}
+        assert field_dict["is_primary_key"] is True
+
+    def test_field_view_from_dict(self):
+        """Test creating FieldView from dictionary."""
+        field_data = {
+            "name": "test_field",
+            "title": "Test Field",
+            "field_type": "string",
+            "help_text": "Help text",
+            "widget": "textarea",
+            "required": True,
+        }
+
+        field = FieldView(**field_data)
+
+        assert field.name == "test_field"
+        assert field.title == "Test Field"
+        assert field.field_type == "string"
+        assert field.help_text == "Help text"
+        assert field.widget == "textarea"
+        assert field.required is True
+
+    def test_field_view_invalid_field_type(self):
+        """Test FieldView with invalid field type."""
+        with pytest.raises(ValidationError):
+            FieldView(
+                name="test_field",
+                title="Test Field",
+                field_type="invalid_type",  # type: ignore
+            )
+
+    def test_field_view_optional_fields_defaults(self):
+        """Test that optional fields have correct defaults."""
+        field = FieldView(
+            name="test_field",
+            title="Test Field",
+            field_type="string",
+        )
+
+        assert field.title == "Test Field"
+        assert field.help_text is None
+        assert field.widget == "text"  # Default widget
+        assert field.widget_config is None
+        assert field.required is False
+        assert field.readonly is False
+        assert field.disabled is False
+        assert field.placeholder is None
+        assert field.default_value is None
+        assert field.options is None
+        assert field.error is None
+        assert field.validators is not None  # Default FieldValidation
+        assert field.custom_validator is None
+        assert field.is_primary_key is False
+        assert field.model_class is None

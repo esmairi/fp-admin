@@ -4,26 +4,15 @@ Field utilities for fp-admin.
 This module provides utility functions for working with fields and SQLModel conversion.
 """
 
-from dataclasses import dataclass
+import sys
 from typing import Any, List, Literal, cast, get_args, get_origin, get_type_hints
 
 from sqlmodel import SQLModel
 
 from .base import FieldView
+from .field_factory import FieldFactory
+from .field_validator import FieldValidation
 from .types import FieldType
-from .validation import FieldValidation
-
-
-@dataclass
-class FieldViewConfig:
-    """Configuration for creating FieldView objects."""
-
-    field_name: str
-    field_type: FieldType
-    field_info: Any
-    validation: FieldValidation | None
-    python_type: type
-    is_primary_key: bool = False
 
 
 def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
@@ -60,7 +49,7 @@ def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
         # Get field type and metadata
         field_type = type_hints.get(field_name, Any)
 
-        #  primary key fields (fix: use getattr and check for True)
+        # Check for primary key fields
         is_primary_key = getattr(field_info, "primary_key", False) is True
 
         # Determine field type based on Python type
@@ -69,26 +58,64 @@ def sqlmodel_to_fieldviews(model: type[SQLModel]) -> List[FieldView]:
         # Create validation rules
         validation = _create_validation(field_info)
 
-        # Create FieldView using appropriate class method
-        field_config = FieldViewConfig(
-            field_name=field_name,
-            field_type=field_type_str,
-            field_info=field_info,
-            validation=validation,
-            python_type=field_type,
-            is_primary_key=is_primary_key,
-        )
+        # Create FieldView using appropriate factory method
+        if is_primary_key:
+            field_view = FieldFactory.primarykey_field(
+                field_name, _format_field_title(field_name)
+            )
+        elif field_type_str == "string":
+            field_view = FieldFactory.string_field(
+                field_name, _format_field_title(field_name)
+            )
+        elif field_type_str == "number":
+            field_view = FieldFactory.number_field(
+                field_name, _format_field_title(field_name)
+            )
+        elif field_type_str == "boolean":
+            field_view = FieldFactory.boolean_field(
+                field_name, _format_field_title(field_name)
+            )
+        elif field_type_str == "choice":
+            field_view = FieldFactory.choice_field(
+                field_name, _format_field_title(field_name)
+            )
+        elif field_type_str == "multichoice":
+            field_view = FieldFactory.multichoice_field(
+                field_name, _format_field_title(field_name)
+            )
+        else:
+            field_view = FieldFactory.string_field(
+                field_name, _format_field_title(field_name)
+            )
 
-        field_view = _create_field_view(field_config)
+        # Add validation if present
+        if validation:
+            field_view.validators = validation
+
+        # Add help text if present
+        help_text = _get_help_text(field_info)
+        if help_text:
+            field_view.help_text = help_text
 
         field_views.append(field_view)
 
     return field_views
 
 
-def _get_field_type(python_type: type) -> FieldType:
+def _get_field_type(python_type: Any) -> FieldType:
     """Convert Python type to FieldType."""
     origin = get_origin(python_type)
+
+    # Handle UnionType for Python 3.10+
+    if sys.version_info >= (3, 10):
+        from types import UnionType
+
+        if isinstance(python_type, UnionType):
+            args = get_args(python_type)
+            if type(None) in args:
+                for arg in args:
+                    if arg is not type(None):
+                        return _get_field_type(arg)
 
     if origin is not None:
         # Handle Optional[T], Union[T, None], etc.
@@ -101,15 +128,15 @@ def _get_field_type(python_type: type) -> FieldType:
 
         # Handle Literal types
         if origin is Literal:
-            return "select"
+            return "choice"
 
     # Type mapping for simple types
     type_mapping = {
-        str: "text",
+        str: "string",
         int: "number",
         float: "number",
-        bool: "checkbox",
-        list: "select",  # Multi-select
+        bool: "boolean",
+        list: "multichoice",  # Multi-select
     }
 
     # Check for list types with __origin__ attribute
@@ -117,24 +144,10 @@ def _get_field_type(python_type: type) -> FieldType:
         hasattr(python_type, "__origin__")
         and getattr(python_type, "__origin__") is list
     ):
-        return "select"
+        return "multichoice"
 
-    # Return mapped type or default to text
-    return cast(FieldType, type_mapping.get(python_type, "text"))
-
-
-def _get_literal_choices(python_type: type) -> List[dict[str, str]] | None:
-    """Extract choices from Literal type."""
-    origin = get_origin(python_type)
-
-    if origin is Literal:
-        args = get_args(python_type)
-        choices = []
-        for value in args:
-            choices.append({"title": str(value).title(), "value": value})
-        return choices
-
-    return None
+    # Return mapped type or default to string
+    return cast(FieldType, type_mapping.get(python_type, "string"))
 
 
 def _create_validation(field_info: Any) -> FieldValidation | None:
@@ -162,8 +175,8 @@ def _create_validation(field_info: Any) -> FieldValidation | None:
         validation.max_value = field_info.lte
 
     # Check for pattern validation (email, etc.)
-    if hasattr(field_info, "pattern") and field_info.pattern:
-        validation.pattern = field_info.pattern
+    # Note: SQLModel Field doesn't support pattern directly
+    # This would need to be handled through custom validation
 
     # Only return validation if we have some rules
     if any(
@@ -198,59 +211,3 @@ def _get_help_text(field_info: Any) -> str | None:
     if hasattr(field_info, "description") and field_info.description:
         return cast(str, field_info.description)
     return None
-
-
-def _get_placeholder(field_info: Any) -> str | None:
-    """Generate placeholder text for field."""
-    if hasattr(field_info, "placeholder") and field_info.placeholder:
-        return cast(str, field_info.placeholder)
-
-    # Generate placeholder based on field name
-    field_name = getattr(field_info, "name", "")
-    if field_name:
-        return f"Enter {_format_field_title(field_name).lower()}"
-
-    return None
-
-
-def _create_field_view(field_config: FieldViewConfig) -> FieldView:
-    """Create FieldView using appropriate class method."""
-
-    # Prepare kwargs for FieldView
-    kwargs = {
-        "required": field_config.field_info.is_required(),
-        "default_value": field_config.field_info.default,
-        "validation": field_config.validation,
-        "help_text": _get_help_text(field_config.field_info),
-        "placeholder": _get_placeholder(field_config.field_info),
-        "is_primary_key": field_config.is_primary_key,
-    }
-    if field_config.is_primary_key:
-        kwargs["disabled"] = True
-        kwargs["readonly"] = True
-
-    # Handle Literal types with choices
-    if field_config.field_type == "select":
-        choices = _get_literal_choices(field_config.python_type)
-        if choices:
-            kwargs["options"] = choices
-
-    # Field type to method mapping
-    field_methods = {
-        "text": FieldView.text_field,
-        "number": FieldView.number_field,
-        "checkbox": FieldView.checkbox_field,
-        "date": FieldView.date_field,
-        "textarea": FieldView.textarea_field,
-        "file": FieldView.file_field,
-        "select": FieldView.select_field,
-    }
-
-    # Get the appropriate method or default to text_field
-    method = field_methods.get(field_config.field_type, FieldView.text_field)
-
-    return method(
-        name=field_config.field_name,
-        title=_format_field_title(field_config.field_name),
-        **kwargs,
-    )
