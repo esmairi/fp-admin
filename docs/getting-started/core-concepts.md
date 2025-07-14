@@ -328,7 +328,6 @@ fp-admin is highly configurable through settings:
 
 ```python
 # settings.py
-from fp_admin.global_settings import *
 
 # Database
 DATABASE_URL = "sqlite:///./app.db"

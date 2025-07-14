@@ -2,281 +2,451 @@
 
 ## Field Types and Widgets
 
-| **Field Type**  | **Widgets**                       | **Note**                                                             |
-|-----------------|-----------------------------------|----------------------------------------------------------------------|
-| `string`        | `text`, `textarea`, `password`    | Short or long text, password input                                   |
-| `number`        | `input`, `Slider`                 | Whole numbers, optional range with `Slider`                          |
-| `float`         | `input`, `Slider`                 | Decimal input with `mode="decimal"`                                  |
-| `time`          | `calendar` (`timeOnly`)           | Time-only input (hh\:mm)                                             |
-| `datetime`      | `calendar` (`showTime`)           | Combined date and time input                                         |
-| `boolean`       | `Checkbox`, `switch`, `select`    | True/false toggle                                                    |
-| `choice`        | `dropdown`, `radio`, `select`     | Select one value from a predefined list (enum-like)                  |
-| `multichoice`   | `multiSelect`, `chips`, `listBox` | Select multiple values from a list (many-to-many, tags, roles, etc.) |
-| `foreignkey`    | `dropdown`, `autoComplete`        | Relation to another model (many-to-one)                              |
-| `many_to_many`  | `autocomplete`, `dropdown`        | Relation to multiple items (many-to-many field)                      |
-| `OneToOneField` | `autocomplete`, `dropdown`        | Unique foreign key, can be embedded or selected                      |
-| `date`          | `calendar`                        | Date-only selection (`yy-mm-dd`)                                     |
-| `file`          | `upload`                          | Upload one or more files                                             |
-| `image`         | `image` + preview (custom)        | Image file with preview                                              |
-| `json`          | `editor` (custom integration)     | Monaco or Ace for editable JSON                                      |
-| `color`         | `colorPicker`                     | Color selection with HEX or RGB format                               |
-| `primarykey`    | None                              | Primary key field (auto-increment, UUID, etc.) - always readonly/disabled |
+fp-admin uses `FieldFactory` to create field configurations. Here are the available field types and their usage:
 
-## Widget Configuration
+| **Field Type**  | **Factory Method**                | **Description**                                                    |
+|-----------------|-----------------------------------|--------------------------------------------------------------------|
+| `primarykey`    | `FieldFactory.primarykey_field()` | Primary key field (auto-increment, UUID, etc.) - always readonly  |
+| `string`        | `FieldFactory.string_field()`     | Short or long text input                                          |
+| `email`         | `FieldFactory.email_field()`      | Email input with validation                                       |
+| `password`      | `FieldFactory.password_field()`   | Password input with hidden characters                             |
+| `boolean`       | `FieldFactory.boolean_field()`    | True/false toggle                                                 |
+| `textarea`      | `FieldFactory.textarea_field()`   | Multi-line text input                                             |
+| `many_to_many`  | `FieldFactory.many_to_many_field()` | Many-to-many relationships                                       |
+| `foreign_key`   | `FieldFactory.foreign_key_field()` | Foreign key relationships                                         |
 
-| **Option** | **Type** | **Description** | **Used By** |
-|------------|----------|-----------------|-------------|
-| `timeOnly` | boolean | Show only time picker | `time` fields |
-| `showTime` | boolean | Show time in calendar | `datetime` fields |
-| `mode` | string | Input mode (decimal) | `float` fields |
-| `preview` | boolean | Show image preview | `image` fields |
-| `editor_type` | string | Editor type (monaco/ace) | `json` fields |
-| `min` | float | Minimum value | `number`/`float` fields |
-| `max` | float | Maximum value | `number`/`float` fields |
-| `step` | float | Step increment | `number`/`float` fields |
+## Field Factory Methods
 
-## Field Type Details
+### Primary Key Field
 
-### `string`
-- **Purpose**: Text input fields
-- **Widgets**: `text`, `textarea`, `password`
-- **Validation**: Length limits, pattern matching
-- **Use Cases**: Names, descriptions, passwords, emails
+```python
+FieldFactory.primarykey_field("id", "ID")
+```
 
-### `number`
-- **Purpose**: Integer input fields
-- **Widgets**: `input`, `Slider`
-- **Validation**: Min/max values, step increments
-- **Use Cases**: Quantities, ratings, scores, counts
+**Purpose**: Primary key field (readonly)
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
 
-### `float`
-- **Purpose**: Decimal number input
-- **Widgets**: `input`, `Slider`
-- **Configuration**: `mode="decimal"`
-- **Use Cases**: Prices, measurements, percentages, weights
+### String Field
 
-### `time`
-- **Purpose**: Time-only input
-- **Widgets**: `calendar` with `timeOnly=True`
-- **Validation**: HH:MM format
-- **Use Cases**: Start times, durations, schedules
+```python
+FieldFactory.string_field("username", "Username", required=True, min_length=3, max_length=150)
+```
 
-### `datetime`
-- **Purpose**: Combined date and time input
-- **Widgets**: `calendar` with `showTime=True`
-- **Validation**: ISO datetime format
-- **Use Cases**: Created dates, event times, timestamps
+**Purpose**: Text input fields
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `required`: Whether the field is required (default: False)
+- `min_length`: Minimum character length
+- `max_length`: Maximum character length
+- `pattern`: Regex pattern for validation
 
-### `boolean`
-- **Purpose**: True/false toggle
-- **Widgets**: `Checkbox`, `switch`, `select`
-- **Validation**: Boolean values only
-- **Use Cases**: Active flags, yes/no questions, toggles
+### Email Field
 
-### `choice`
-- **Purpose**: Single selection from options
-- **Widgets**: `dropdown`, `radio`, `select`
-- **Validation**: Must be one of predefined choices
-- **Use Cases**: Categories, status, single selection
+```python
+FieldFactory.email_field("email", "Email", required=True)
+```
 
-### `multichoice`
-- **Purpose**: Multiple selections from options
-- **Widgets**: `multiSelect`, `chips`, `listBox`
-- **Validation**: Min/max selections, valid choices
-- **Use Cases**: Tags, roles, multiple selections
+**Purpose**: Email input with validation
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `required`: Whether the field is required (default: False)
 
-### `foreignkey`
-- **Purpose**: Many-to-one relationships
-- **Widgets**: `dropdown`, `autoComplete`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Use Cases**: Model relationships, foreign keys
+### Password Field
 
-### `many_to_many`
-- **Purpose**: Many-to-many relationships
-- **Widgets**: `autoComplete`, `dropdown`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Use Cases**: Multiple model relationships
+```python
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
+```
 
-### `OneToOneField`
-- **Purpose**: One-to-one relationships
-- **Widgets**: `autoComplete`, `dropdown`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Use Cases**: Unique model relationships
+**Purpose**: Password input with hidden characters
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `required`: Whether the field is required (default: False)
+- `min_length`: Minimum password length
 
-### `date`
-- **Purpose**: Date-only selection
-- **Widgets**: `calendar`
-- **Validation**: YYYY-MM-DD format
-- **Use Cases**: Birth dates, event dates, deadlines
+### Boolean Field
 
-### `file`
-- **Purpose**: File upload
-- **Widgets**: `upload`
-- **Validation**: File type, size limits
-- **Use Cases**: Documents, attachments, files
+```python
+FieldFactory.boolean_field("is_active", "Active")
+```
 
-### `image`
-- **Purpose**: Image upload with preview
-- **Widgets**: `image`
-- **Configuration**: `preview=True`
-- **Use Cases**: Avatars, photos, images
+**Purpose**: True/false toggle
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
 
-### `json`
-- **Purpose**: Structured JSON data
-- **Widgets**: `editor`
-- **Configuration**: `editor_type` (monaco/ace)
-- **Use Cases**: Configuration, metadata, complex data
+### Textarea Field
 
-### `color`
-- **Purpose**: Color selection
-- **Widgets**: `colorPicker`
-- **Validation**: HEX or RGB format
-- **Use Cases**: Theme colors, branding, visual settings
+```python
+FieldFactory.textarea_field("description", "Description", rows=5, max_length=200)
+```
 
-### `primarykey`
-- **Purpose**: Primary key field
-- **Widgets**: None (no widget)
-- **Validation**: Unique identifier validation
-- **Use Cases**: Auto-increment IDs, UUIDs, custom primary keys
-- **Behavior**: Always readonly and disabled
+**Purpose**: Multi-line text input
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `rows`: Number of visible rows
+- `max_length`: Maximum character length
 
-## Widget Behavior
+### Many-to-Many Field
 
-### Calendar Widget
-- **timeOnly**: Shows only time picker (HH:MM)
-- **showTime**: Shows both date and time picker
-- **Default**: Shows only date picker
+```python
+FieldFactory.many_to_many_field(
+    "groups",
+    "Groups",
+    model_class=Group,
+    field_title="name"
+)
+```
 
-### Slider Widget
-- **min/max**: Defines range
-- **step**: Defines increment
-- **mode**: "decimal" for float values
+**Purpose**: Many-to-many relationships
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `model_class`: The related model class
+- `field_title`: The field to display from the related model
 
-### MultiSelect Widget
-- **min_selections**: Minimum required selections
-- **max_selections**: Maximum allowed selections
+### Foreign Key Field
 
-### AutoComplete Widget
-- **search**: Enables search functionality
-- **model**: Related model for suggestions
+```python
+FieldFactory.foreign_key_field(
+    "category_id",
+    "Category",
+    model_class=Category,
+    field_title="name"
+)
+```
 
-## Relationship Fields
+**Purpose**: Foreign key relationships
+**Parameters**:
+- `field_name`: The field name in the model
+- `field_title`: Display title for the field
+- `model_class`: The related model class
+- `field_title`: The field to display from the related model
 
-### `foreignkey`
-- **Purpose**: Many-to-one relationships
-- **Widgets**: `dropdown`, `autoComplete`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Example**: User belongs to one Department
+## Field Configuration Examples
 
-### `many_to_many`
-- **Purpose**: Many-to-many relationships
-- **Widgets**: `autoComplete`, `dropdown`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Example**: User has many Roles, Role has many Users
+### Basic Form Fields
 
-### `OneToOneField`
-- **Purpose**: One-to-one relationships
-- **Widgets**: `autoComplete`, `dropdown`
-- **Configuration**: `model`, `id_field`, `title_field`
-- **Example**: User has one Profile, Profile belongs to one User
+```python
+from fp_admin.admin.fields import FieldFactory
+from .models import User, Group, Permission
+
+class UserFormView(BaseViewBuilder):
+    model = User
+    view_type = "form"
+    name = "UserForm"
+
+    fields = [
+        # Primary key (readonly)
+        FieldFactory.primarykey_field("id", "ID"),
+
+        # String fields
+        FieldFactory.string_field("username", "Username", required=True, min_length=3),
+        FieldFactory.string_field("first_name", "First Name", required=True),
+        FieldFactory.string_field("last_name", "Last Name", required=True),
+
+        # Email field
+        FieldFactory.email_field("email", "Email", required=True),
+
+        # Password field
+        FieldFactory.password_field("password", "Password", required=True, min_length=8),
+
+        # Boolean fields
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.boolean_field("is_superuser", "Superuser"),
+
+        # Textarea field
+        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
+
+        # Many-to-many relationships
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+```
+
+### List View Fields
+
+```python
+class UserListView(BaseViewBuilder):
+    model = User
+    view_type = "list"
+    name = "UserList"
+
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field("username", "Username"),
+        FieldFactory.string_field("first_name", "First Name"),
+        FieldFactory.string_field("last_name", "Last Name"),
+        FieldFactory.email_field("email", "Email"),
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.boolean_field("is_superuser", "Superuser"),
+    ]
+```
+
+### Group Form Fields
+
+```python
+class GroupFormView(BaseViewBuilder):
+    model = Group
+    view_type = "form"
+    name = "GroupForm"
+
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field("name", "Name", required=True, min_length=1),
+        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
+        FieldFactory.many_to_many_field("permissions", "Permissions", model_class=Permission, field_title="name"),
+        FieldFactory.many_to_many_field("users", "Users", model_class=User, field_title="username"),
+    ]
+```
+
+### Permission Form Fields
+
+```python
+class PermissionFormView(BaseViewBuilder):
+    model = Permission
+    view_type = "form"
+    name = "PermissionForm"
+
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field("codename", "Code Name", required=True, min_length=1, max_length=150),
+        FieldFactory.string_field("name", "Name", required=True, min_length=1, max_length=150),
+        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+```
 
 ## Field Validation
 
-| **Field Type** | **Validation Rules** |
-|----------------|---------------------|
-| `string` | Length, pattern (email) |
-| `number` | Min/max values, step |
-| `float` | Min/max values, decimal precision |
-| `time` | HH:MM format |
-| `datetime` | ISO datetime format |
-| `email` | Email pattern validation |
-| `multichoice` | Min/max selections |
-| `file` | File type, size limits |
-| `image` | Image format, size limits |
+### String Validation
 
-## Usage Examples
-
-### Basic Field Creation
 ```python
-from fp_admin.admin.fields import FieldView
-
-# String field
-name_field = FieldView.string_field("name", "Name")
-
-# Number field with slider
-rating_field = FieldView.slider_field("rating", "Rating")
-
-# Time field with configuration
-time_field = FieldView.time_field("start_time", "Start Time")
-
-# Boolean field with switch
-active_field = FieldView.switch_field("active", "Active")
-
-# Choice field with dropdown
-category_field = FieldView.select_field("category", "Category")
-
-# Multichoice field with chips
-tags_field = FieldView.chips_field("tags", "Tags")
-```
-
-### Widget Configuration
-```python
-from fp_admin.admin.fields import FieldView, WidgetConfig
-
-# Float field with decimal mode
-price_field = FieldView.float_field(
-    "price",
-    "Price",
-    widget_config=WidgetConfig(mode="decimal", min=0.0, max=1000.0)
+# Required field with length constraints
+FieldFactory.string_field(
+    "title",
+    "Title",
+    required=True,
+    min_length=1,
+    max_length=200
 )
 
-# Image field with preview
-avatar_field = FieldView.image_field(
-    "avatar",
-    "Avatar",
-    widget_config=WidgetConfig(preview=True)
-)
-
-# JSON field with Monaco editor
-config_field = FieldView.json_field(
-    "config",
-    "Configuration",
-    widget_config=WidgetConfig(editor_type="monaco")
-)
-
-# Number field with slider and range
-score_field = FieldView.slider_field(
-    "score",
-    "Score",
-    widget_config=WidgetConfig(min=0, max=100, step=5)
+# Field with pattern validation
+FieldFactory.string_field(
+    "phone",
+    "Phone Number",
+    pattern=r"^\+?1?\d{9,15}$"
 )
 ```
 
-### Relationship Fields
+### Email Validation
+
 ```python
-from fp_admin.admin.fields import RelationshipField
+# Email field with built-in validation
+FieldFactory.email_field("email", "Email", required=True)
+```
 
-# Foreign key relationship
-user_field = RelationshipField.foreignkey_field(
-    "user_id",
-    "User",
-    model="User"
+### Password Validation
+
+```python
+# Password with strength requirements
+FieldFactory.password_field(
+    "password",
+    "Password",
+    required=True,
+    min_length=8
+)
+```
+
+### Textarea Validation
+
+```python
+# Textarea with size constraints
+FieldFactory.textarea_field(
+    "description",
+    "Description",
+    rows=5,
+    max_length=1000
+)
+```
+
+## Relationship Fields
+
+### Many-to-Many Relationships
+
+```python
+# User groups
+FieldFactory.many_to_many_field(
+    "groups",
+    "Groups",
+    model_class=Group,
+    field_title="name"
 )
 
-# Many-to-many relationship
-roles_field = RelationshipField.many_to_many_field(
-    "roles",
-    "Roles",
-    model="Role"
+# Group permissions
+FieldFactory.many_to_many_field(
+    "permissions",
+    "Permissions",
+    model_class=Permission,
+    field_title="name"
 )
 
-# Autocomplete relationship
-department_field = RelationshipField.autocomplete_field(
-    "department",
+# Group users
+FieldFactory.many_to_many_field(
+    "users",
+    "Users",
+    model_class=User,
+    field_title="username"
+)
+```
+
+### Foreign Key Relationships
+
+```python
+# User's department
+FieldFactory.foreign_key_field(
+    "department_id",
     "Department",
-    model="Department"
+    model_class=Department,
+    field_title="name"
+)
+
+# Post's author
+FieldFactory.foreign_key_field(
+    "author_id",
+    "Author",
+    model_class=User,
+    field_title="username"
 )
 ```
 
-### Choice Fields with Options
+## Field Configuration Best Practices
+
+### 1. Use Appropriate Field Types
+
+```python
+# Good: Use email field for email addresses
+FieldFactory.email_field("email", "Email", required=True)
+
+# Good: Use password field for passwords
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
+
+# Good: Use boolean field for true/false values
+FieldFactory.boolean_field("is_active", "Active")
 ```
+
+### 2. Provide Meaningful Validation
+
+```python
+# String field with length validation
+FieldFactory.string_field(
+    "username",
+    "Username",
+    required=True,
+    min_length=3,
+    max_length=50
+)
+
+# Textarea with size limits
+FieldFactory.textarea_field(
+    "description",
+    "Description",
+    rows=4,
+    max_length=500
+)
+```
+
+### 3. Use Relationships Appropriately
+
+```python
+# Many-to-many for multiple selections
+FieldFactory.many_to_many_field(
+    "groups",
+    "Groups",
+    model_class=Group,
+    field_title="name"
+)
+
+# Foreign key for single selection
+FieldFactory.foreign_key_field(
+    "category_id",
+    "Category",
+    model_class=Category,
+    field_title="name"
+)
+```
+
+### 4. Organize Fields Logically
+
+```python
+fields = [
+    # Primary key first
+    FieldFactory.primarykey_field("id", "ID"),
+
+    # Basic information
+    FieldFactory.string_field("username", "Username", required=True),
+    FieldFactory.string_field("first_name", "First Name", required=True),
+    FieldFactory.string_field("last_name", "Last Name", required=True),
+    FieldFactory.email_field("email", "Email", required=True),
+
+    # Security
+    FieldFactory.password_field("password", "Password", required=True, min_length=8),
+    FieldFactory.boolean_field("is_active", "Active"),
+    FieldFactory.boolean_field("is_superuser", "Superuser"),
+
+    # Relationships
+    FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+]
+```
+
+## Complete Example
+
+Here's a complete example showing all field types in use:
+
+```python
+from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.admin.fields import FieldFactory
+from .models import User, Group, Permission, Department
+
+class UserFormView(BaseViewBuilder):
+    model = User
+    view_type = "form"
+    name = "UserForm"
+
+    fields = [
+        # Primary key
+        FieldFactory.primarykey_field("id", "ID"),
+
+        # Basic information
+        FieldFactory.string_field("username", "Username", required=True, min_length=3, max_length=150),
+        FieldFactory.string_field("first_name", "First Name", required=True, max_length=100),
+        FieldFactory.string_field("last_name", "Last Name", required=True, max_length=100),
+        FieldFactory.email_field("email", "Email", required=True),
+
+        # Security
+        FieldFactory.password_field("password", "Password", required=True, min_length=8),
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.boolean_field("is_superuser", "Superuser"),
+
+        # Additional information
+        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
+
+        # Relationships
+        FieldFactory.foreign_key_field("department_id", "Department", model_class=Department, field_title="name"),
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+
+    creation_fields = ["username", "first_name", "last_name", "email", "password", "is_active", "is_superuser", "department_id"]
+    allowed_update_fields = ["first_name", "last_name", "email", "is_active", "is_superuser", "bio", "department_id", "groups"]
+```
+
+This example demonstrates:
+- All available field types
+- Proper validation rules
+- Relationship handling
+- Field organization
+- Creation and update field restrictions

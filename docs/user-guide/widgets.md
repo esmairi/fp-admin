@@ -4,53 +4,47 @@ This guide covers all available widgets in fp-admin and how to configure them.
 
 ## Overview
 
-Widgets are the UI components that render form fields in the admin interface. Each field type supports specific widgets that determine how the field appears and behaves.
+Widgets are the UI components that render form fields in the admin interface. Each field type supports specific widgets that determine how the field appears and behaves. In fp-admin, widgets are automatically selected based on the field type when using `FieldFactory`.
 
-## Basic Input Widgets
+## Field Factory Widgets
 
 ### Text Widget
 
 Single-line text input for short text.
 
 ```python
-from fp_admin.admin.fields import FieldView
+from fp_admin.admin.fields import FieldFactory
 
 # Basic text field
-FieldView.text_field("name", "Name", required=True)
-
-# With placeholder
-FieldView.text_field("username", "Username", placeholder="Enter username")
+FieldFactory.string_field("name", "Name", required=True)
 
 # With max length
-FieldView.text_field("title", "Title", max_length=100)
+FieldFactory.string_field("title", "Title", max_length=100)
+
+# With pattern validation
+FieldFactory.string_field("phone", "Phone", pattern=r"^\+?1?\d{9,15}$")
 ```
 
 **Configuration Options:**
-- `placeholder`: Placeholder text
+- `required`: Whether the field is required
 - `max_length`: Maximum character length
 - `min_length`: Minimum character length
 - `pattern`: Regex pattern for validation
 
-### Textarea Widget
+### Email Widget
 
-Multi-line text input for longer content.
+Email input with built-in validation.
 
 ```python
-# Basic textarea
-FieldView.textarea_field("description", "Description")
+# Basic email field
+FieldFactory.email_field("email", "Email", required=True)
 
-# With rows
-FieldView.textarea_field("content", "Content", rows=10)
-
-# With placeholder
-FieldView.textarea_field("notes", "Notes", placeholder="Enter notes here")
+# With custom validation
+FieldFactory.email_field("contact_email", "Contact Email", required=True)
 ```
 
 **Configuration Options:**
-- `rows`: Number of visible rows
-- `cols`: Number of visible columns
-- `placeholder`: Placeholder text
-- `max_length`: Maximum character length
+- `required`: Whether the field is required
 
 ### Password Widget
 
@@ -58,555 +52,462 @@ Password input with hidden characters.
 
 ```python
 # Basic password field
-FieldView.password_field("password", "Password")
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
 
-# With confirmation
-FieldView.password_field("password", "Password", confirm=True)
+# With strength requirements
+FieldFactory.password_field("new_password", "New Password", required=True, min_length=8)
 ```
 
 **Configuration Options:**
-- `confirm`: Show password confirmation field
+- `required`: Whether the field is required
 - `min_length`: Minimum password length
-- `pattern`: Password strength pattern
 
-## Number Input Widgets
+### Textarea Widget
 
-### Input Widget
-
-Basic numeric input.
+Multi-line text input for longer content.
 
 ```python
-# Integer input
-FieldView.number_field("age", "Age")
+# Basic textarea
+FieldFactory.textarea_field("description", "Description")
 
-# Float input
-FieldView.float_field("price", "Price")
+# With rows
+FieldFactory.textarea_field("content", "Content", rows=10)
 
-# With min/max values
-FieldView.number_field("rating", "Rating", min_value=1, max_value=5)
+# With max length
+FieldFactory.textarea_field("notes", "Notes", rows=5, max_length=500)
 ```
 
 **Configuration Options:**
-- `min_value`: Minimum allowed value
-- `max_value`: Maximum allowed value
-- `step`: Step increment for number input
-- `mode`: Input mode ("decimal" for float)
+- `rows`: Number of visible rows
+- `max_length`: Maximum character length
 
-### Slider Widget
+### Boolean Widget
 
-Visual slider for numeric values.
+Toggle switch for true/false values.
 
 ```python
-# Basic slider
-FieldView.slider_field("rating", "Rating", min_value=0, max_value=10)
-
-# With step
-FieldView.slider_field("volume", "Volume", min_value=0, max_value=100, step=5)
-```
-
-**Configuration Options:**
-- `min_value`: Minimum slider value
-- `max_value`: Maximum slider value
-- `step`: Step increment
-- `show_value`: Show current value display
-
-## Boolean Widgets
-
-### Checkbox Widget
-
-Standard checkbox for true/false values.
-
-```python
-# Basic checkbox
-FieldView.checkbox_field("is_active", "Active")
+# Basic boolean field
+FieldFactory.boolean_field("is_active", "Active")
 
 # With default value
-FieldView.checkbox_field("newsletter", "Newsletter", default=True)
+FieldFactory.boolean_field("newsletter", "Newsletter", default=True)
 ```
 
 **Configuration Options:**
 - `default`: Default checked state
-- `label_position`: Label position ("left", "right")
 
-### Switch Widget
+### Primary Key Widget
 
-Toggle switch for boolean values.
+Readonly field for primary keys.
 
 ```python
-# Basic switch
-FieldView.switch_field("is_published", "Published")
-
-# With custom labels
-FieldView.switch_field("status", "Status",
-                      true_label="Enabled", false_label="Disabled")
+# Primary key field (always readonly)
+FieldFactory.primarykey_field("id", "ID")
 ```
 
 **Configuration Options:**
-- `true_label`: Label for true state
-- `false_label`: Label for false state
-- `default`: Default state
-
-### Select Widget
-
-Dropdown for boolean values.
-
-```python
-# Boolean select
-FieldView.select_field("is_active", "Active",
-                      choices=[(True, "Yes"), (False, "No")])
-```
-
-## Choice Widgets
-
-### Dropdown Widget
-
-Select dropdown for single choice.
-
-```python
-# Basic dropdown
-FieldView.choice_field("category", "Category",
-                      choices=[("tech", "Technology"), ("lifestyle", "Lifestyle")])
-
-# With default
-FieldView.choice_field("status", "Status",
-                      choices=status_choices, default="draft")
-```
-
-**Configuration Options:**
-- `choices`: List of (value, label) tuples
-- `default`: Default selected value
-- `placeholder`: Placeholder text
-- `searchable`: Enable search functionality
-
-### Radio Widget
-
-Radio buttons for single choice.
-
-```python
-# Basic radio buttons
-FieldView.radio_field("gender", "Gender",
-                     choices=[("male", "Male"), ("female", "Female")])
-
-# Horizontal layout
-FieldView.radio_field("theme", "Theme",
-                     choices=theme_choices, layout="horizontal")
-```
-
-**Configuration Options:**
-- `choices`: List of (value, label) tuples
-- `layout`: Layout direction ("vertical", "horizontal")
-- `default`: Default selected value
-
-## Multi-Choice Widgets
-
-### MultiSelect Widget
-
-Multi-select dropdown.
-
-```python
-# Basic multi-select
-FieldView.multi_choice_field("tags", "Tags",
-                            choices=tag_choices, max_selections=5)
-
-# With min/max selections
-FieldView.multi_choice_field("roles", "Roles",
-                            choices=role_choices,
-                            min_selections=1, max_selections=3)
-```
-
-**Configuration Options:**
-- `choices`: List of (value, label) tuples
-- `min_selections`: Minimum required selections
-- `max_selections`: Maximum allowed selections
-- `searchable`: Enable search functionality
-
-### Chips Widget
-
-Chip-style multi-select.
-
-```python
-# Basic chips
-FieldView.chips_field("skills", "Skills", choices=skill_choices)
-
-# With color coding
-FieldView.chips_field("categories", "Categories",
-                     choices=category_choices, color_coded=True)
-```
-
-**Configuration Options:**
-- `choices`: List of (value, label) tuples
-- `color_coded`: Use different colors for chips
-- `max_selections`: Maximum allowed selections
-
-### ListBox Widget
-
-List box for multi-selection.
-
-```python
-# Basic list box
-FieldView.listbox_field("permissions", "Permissions",
-                       choices=permission_choices)
-
-# With size
-FieldView.listbox_field("users", "Users",
-                       choices=user_choices, size=10)
-```
-
-**Configuration Options:**
-- `choices`: List of (value, label) tuples
-- `size`: Number of visible options
-- `multiple`: Allow multiple selections
-
-## Date/Time Widgets
-
-### Calendar Widget
-
-Date and time picker.
-
-```python
-# Date only
-FieldView.date_field("birth_date", "Birth Date")
-
-# Date and time
-FieldView.datetime_field("event_time", "Event Time")
-
-# Time only
-FieldView.time_field("start_time", "Start Time")
-```
-
-**Configuration Options:**
-- `format`: Date/time format
-- `min_date`: Minimum allowed date
-- `max_date`: Maximum allowed date
-- `show_time`: Show time picker
-- `time_only`: Show only time picker
-
-## File Upload Widgets
-
-### Upload Widget
-
-File upload input.
-
-```python
-# Basic file upload
-FieldView.file_field("document", "Document")
-
-# With file types
-FieldView.file_field("image", "Image",
-                    accept="image/*", max_size="5MB")
-
-# Multiple files
-FieldView.file_field("attachments", "Attachments", multiple=True)
-```
-
-**Configuration Options:**
-- `accept`: Accepted file types
-- `max_size`: Maximum file size
-- `multiple`: Allow multiple files
-- `upload_dir`: Upload directory
-
-### Image Widget
-
-Image upload with preview.
-
-```python
-# Basic image upload
-FieldView.image_field("avatar", "Avatar")
-
-# With dimensions
-FieldView.image_field("banner", "Banner",
-                     max_width=1200, max_height=400)
-
-# With thumbnail
-FieldView.image_field("photo", "Photo",
-                     thumbnail_size=(150, 150))
-```
-
-**Configuration Options:**
-- `max_width`: Maximum image width
-- `max_height`: Maximum image height
-- `thumbnail_size`: Thumbnail dimensions
-- `preview`: Show image preview
-- `accept`: Accepted image formats
+- Always readonly and disabled
+- No additional configuration needed
 
 ## Relationship Widgets
 
+### Many-to-Many Widget
+
+Multi-select for many-to-many relationships.
+
+```python
+# User groups
+FieldFactory.many_to_many_field(
+    "groups",
+    "Groups",
+    model_class=Group,
+    field_title="name"
+)
+
+# Group permissions
+FieldFactory.many_to_many_field(
+    "permissions",
+    "Permissions",
+    model_class=Permission,
+    field_title="name"
+)
+```
+
+**Configuration Options:**
+- `model_class`: The related model class
+- `field_title`: The field to display from the related model
+
 ### Foreign Key Widget
 
-Dropdown for related model selection.
+Single-select dropdown for foreign key relationships.
 
 ```python
-# Basic foreign key
-FieldView.foreign_key_field("category_id", "Category", model=Category)
-
-# With custom display
-FieldView.foreign_key_field("author_id", "Author",
-                           model=User,
-                           display_field="username")
-
-# With search
-FieldView.foreign_key_field("product_id", "Product",
-                           model=Product,
-                           searchable=True)
-```
-
-**Configuration Options:**
-- `model`: Related model class
-- `display_field`: Field to display in dropdown
-- `searchable`: Enable search functionality
-- `placeholder`: Placeholder text
-
-### AutoComplete Widget
-
-Searchable dropdown for relationships.
-
-```python
-# Basic autocomplete
-FieldView.autocomplete_field("user_id", "User", model=User)
-
-# With custom search
-FieldView.autocomplete_field("product_id", "Product",
-                            model=Product,
-                            search_fields=["name", "description"])
-
-# With minimum characters
-FieldView.autocomplete_field("tag_id", "Tag",
-                            model=Tag,
-                            min_chars=2)
-```
-
-**Configuration Options:**
-- `model`: Related model class
-- `search_fields`: Fields to search in
-- `min_chars`: Minimum characters to trigger search
-- `display_field`: Field to display
-- `placeholder`: Placeholder text
-
-## Advanced Widgets
-
-### JSON Editor Widget
-
-JSON editor with syntax highlighting.
-
-```python
-# Basic JSON editor
-FieldView.json_field("settings", "Settings")
-
-# With default value
-FieldView.json_field("config", "Configuration",
-                    default={"theme": "dark", "language": "en"})
-
-# With schema validation
-FieldView.json_field("metadata", "Metadata",
-                    schema=metadata_schema)
-```
-
-**Configuration Options:**
-- `default`: Default JSON value
-- `schema`: JSON schema for validation
-- `editor_type`: Editor type ("monaco", "ace")
-- `height`: Editor height
-
-### Color Picker Widget
-
-Color selection widget.
-
-```python
-# Basic color picker
-FieldView.color_field("theme_color", "Theme Color")
-
-# With default color
-FieldView.color_field("primary_color", "Primary Color",
-                     default="#007bff")
-
-# With format
-FieldView.color_field("accent_color", "Accent Color",
-                     format="rgb")
-```
-
-**Configuration Options:**
-- `default`: Default color value
-- `format`: Color format ("hex", "rgb", "hsl")
-- `palette`: Custom color palette
-- `alpha`: Enable alpha channel
-
-### Rich Text Widget
-
-Rich text editor.
-
-```python
-# Basic rich text
-FieldView.richtext_field("content", "Content")
-
-# With toolbar
-FieldView.richtext_field("description", "Description",
-                        toolbar=["bold", "italic", "link"])
-
-# With height
-FieldView.richtext_field("body", "Body", height=300)
-```
-
-**Configuration Options:**
-- `toolbar`: Available toolbar buttons
-- `height`: Editor height
-- `plugins`: Additional plugins
-- `placeholder`: Placeholder text
-
-### Markdown Widget
-
-Markdown editor.
-
-```python
-# Basic markdown
-FieldView.markdown_field("content", "Content")
-
-# With preview
-FieldView.markdown_field("description", "Description",
-                        preview=True)
-
-# With height
-FieldView.markdown_field("body", "Body", height=400)
-```
-
-**Configuration Options:**
-- `preview`: Show live preview
-- `height`: Editor height
-- `toolbar`: Available toolbar buttons
-- `placeholder`: Placeholder text
-
-## Custom Widgets
-
-### Creating Custom Widgets
-
-You can create custom widgets by extending the base widget classes:
-
-```python
-from fp_admin.admin.fields import FieldView
-
-class CustomWidget(FieldView):
-    def __init__(self, name: str, label: str, **kwargs):
-        super().__init__(
-            name=name,
-            label=label,
-            field_type="string",
-            widget="custom",
-            **kwargs
-        )
-
-    def get_widget_config(self):
-        return {
-            "type": "custom",
-            "component": "CustomComponent",
-            "props": self.get_props()
-        }
-```
-
-### Widget Configuration
-
-Each widget can be configured with specific options:
-
-```python
-# Widget with custom configuration
-FieldView(
-    name="custom_field",
-    label="Custom Field",
-    field_type="string",
-    widget="custom",
-    widget_config={
-        "custom_option": "value",
-        "another_option": True
-    }
+# User's department
+FieldFactory.foreign_key_field(
+    "department_id",
+    "Department",
+    model_class=Department,
+    field_title="name"
 )
+
+# Post's author
+FieldFactory.foreign_key_field(
+    "author_id",
+    "Author",
+    model_class=User,
+    field_title="username"
+)
+```
+
+**Configuration Options:**
+- `model_class`: The related model class
+- `field_title`: The field to display from the related model
+
+## Widget Configuration Examples
+
+### User Form Widgets
+
+```python
+from fp_admin.admin.fields import FieldFactory
+from .models import User, Group
+
+class UserFormView(BaseViewBuilder):
+    model = User
+    view_type = "form"
+    name = "UserForm"
+
+    fields = [
+        # Readonly primary key
+        FieldFactory.primarykey_field("id", "ID"),
+
+        # Text inputs
+        FieldFactory.string_field("username", "Username", required=True, min_length=3),
+        FieldFactory.string_field("first_name", "First Name", required=True),
+        FieldFactory.string_field("last_name", "Last Name", required=True),
+
+        # Email input
+        FieldFactory.email_field("email", "Email", required=True),
+
+        # Password input
+        FieldFactory.password_field("password", "Password", required=True, min_length=8),
+
+        # Boolean toggles
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.boolean_field("is_superuser", "Superuser"),
+
+        # Textarea for longer content
+        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
+
+        # Many-to-many selection
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+```
+
+### Group Form Widgets
+
+```python
+class GroupFormView(BaseViewBuilder):
+    model = Group
+    view_type = "form"
+    name = "GroupForm"
+
+    fields = [
+        # Readonly primary key
+        FieldFactory.primarykey_field("id", "ID"),
+
+        # Text inputs
+        FieldFactory.string_field("name", "Name", required=True, min_length=1),
+        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
+
+        # Many-to-many selections
+        FieldFactory.many_to_many_field("permissions", "Permissions", model_class=Permission, field_title="name"),
+        FieldFactory.many_to_many_field("users", "Users", model_class=User, field_title="username"),
+    ]
+```
+
+### Permission Form Widgets
+
+```python
+class PermissionFormView(BaseViewBuilder):
+    model = Permission
+    view_type = "form"
+    name = "PermissionForm"
+
+    fields = [
+        # Readonly primary key
+        FieldFactory.primarykey_field("id", "ID"),
+
+        # Text inputs
+        FieldFactory.string_field("codename", "Code Name", required=True, min_length=1, max_length=150),
+        FieldFactory.string_field("name", "Name", required=True, min_length=1, max_length=150),
+        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
+
+        # Many-to-many selection
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+```
+
+## Widget Behavior
+
+### Form Widgets
+
+Form widgets are used in create and edit forms:
+
+- **Text inputs**: Single-line text entry
+- **Email inputs**: Email validation with proper keyboard on mobile
+- **Password inputs**: Hidden characters with strength indicators
+- **Textarea**: Multi-line text entry with resizable area
+- **Boolean toggles**: Switch-style true/false controls
+- **Many-to-many**: Multi-select dropdown with search
+- **Foreign key**: Single-select dropdown with search
+
+### List Widgets
+
+List widgets are used in table displays:
+
+- **Text fields**: Plain text display
+- **Email fields**: Clickable email links
+- **Boolean fields**: Checkmark or toggle display
+- **Primary key**: Plain number display
+- **Relationships**: Display related object names
+
+## Widget Validation
+
+### Client-Side Validation
+
+```python
+# Required field validation
+FieldFactory.string_field("username", "Username", required=True)
+
+# Length validation
+FieldFactory.string_field("title", "Title", min_length=1, max_length=200)
+
+# Pattern validation
+FieldFactory.string_field("phone", "Phone", pattern=r"^\+?1?\d{9,15}$")
+
+# Email validation
+FieldFactory.email_field("email", "Email", required=True)
+
+# Password strength
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
+```
+
+### Server-Side Validation
+
+All field validations are also enforced on the server side:
+
+- Required field checking
+- Length constraints
+- Pattern matching
+- Email format validation
+- Password strength requirements
+- Relationship integrity
+
+## Widget Styling
+
+### Default Styling
+
+All widgets come with consistent styling:
+
+- **Text inputs**: Clean, modern appearance
+- **Email inputs**: Email-specific styling
+- **Password inputs**: Secure appearance with strength indicators
+- **Textarea**: Resizable with proper padding
+- **Boolean toggles**: Modern switch appearance
+- **Dropdowns**: Searchable with clear options
+- **Multi-select**: Tag-like appearance for selected items
+
+### Responsive Design
+
+All widgets are responsive:
+
+- **Mobile**: Touch-friendly controls
+- **Tablet**: Optimized for touch and mouse
+- **Desktop**: Full keyboard and mouse support
+
+## Widget Accessibility
+
+### Accessibility Features
+
+All widgets include accessibility features:
+
+- **Screen readers**: Proper ARIA labels
+- **Keyboard navigation**: Full keyboard support
+- **Focus management**: Clear focus indicators
+- **Color contrast**: WCAG compliant colors
+- **Error messages**: Clear, descriptive errors
+
+### Keyboard Shortcuts
+
+- **Tab**: Navigate between fields
+- **Enter**: Submit forms
+- **Escape**: Cancel or close dialogs
+- **Arrow keys**: Navigate dropdowns and lists
+
+## Widget Performance
+
+### Optimization Features
+
+Widgets are optimized for performance:
+
+- **Lazy loading**: Load data as needed
+- **Debounced search**: Efficient search in dropdowns
+- **Virtual scrolling**: Handle large lists efficiently
+- **Caching**: Cache frequently used data
+
+### Best Practices
+
+```python
+# Use appropriate field types
+FieldFactory.email_field("email", "Email")  # Better than string_field for emails
+FieldFactory.boolean_field("is_active", "Active")  # Better than choice_field for booleans
+
+# Provide meaningful validation
+FieldFactory.string_field("username", "Username", required=True, min_length=3)
+
+# Use relationships efficiently
+FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name")
+```
+
+## Widget Customization
+
+### Field-Level Customization
+
+```python
+# Custom validation messages
+FieldFactory.string_field(
+    "username",
+    "Username",
+    required=True,
+    min_length=3,
+    max_length=50
+)
+
+# Custom field behavior
+FieldFactory.textarea_field(
+    "description",
+    "Description",
+    rows=5,
+    max_length=1000
+)
+```
+
+### View-Level Customization
+
+```python
+class CustomUserFormView(BaseViewBuilder):
+    model = User
+    view_type = "form"
+    name = "CustomUserForm"
+
+    fields = [
+        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.string_field("username", "Username", required=True),
+        FieldFactory.email_field("email", "Email", required=True),
+        FieldFactory.password_field("password", "Password", required=True, min_length=8),
+        FieldFactory.boolean_field("is_active", "Active"),
+        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    ]
+
+    creation_fields = ["username", "email", "password", "is_active"]
+    allowed_update_fields = ["email", "is_active", "groups"]
+```
+
+## Widget Testing
+
+### Testing Widget Behavior
+
+```python
+import pytest
+from fp_admin.admin.fields import FieldFactory
+
+def test_string_field_validation():
+    """Test string field validation"""
+    field = FieldFactory.string_field("username", "Username", required=True, min_length=3)
+
+    # Test validation
+    assert field.required is True
+    assert field.min_length == 3
+
+def test_email_field_validation():
+    """Test email field validation"""
+    field = FieldFactory.email_field("email", "Email", required=True)
+
+    # Test validation
+    assert field.required is True
+    assert field.field_type == "email"
+
+def test_boolean_field_behavior():
+    """Test boolean field behavior"""
+    field = FieldFactory.boolean_field("is_active", "Active")
+
+    # Test behavior
+    assert field.field_type == "boolean"
 ```
 
 ## Widget Best Practices
 
 ### 1. Choose Appropriate Widgets
 
-- Use **text** for short, single-line input
-- Use **textarea** for longer, multi-line content
-- Use **dropdown** for single selection from many options
-- Use **radio** for single selection from few options
-- Use **multiSelect** for multiple selections
-- Use **switch** for boolean toggles
-- Use **slider** for numeric ranges
-
-### 2. Provide Good Defaults
-
 ```python
-# Good: Provide sensible defaults
-FieldView.switch_field("is_active", "Active", default=True)
-FieldView.choice_field("status", "Status",
-                      choices=status_choices, default="draft")
+# Good: Use email field for email addresses
+FieldFactory.email_field("email", "Email", required=True)
+
+# Good: Use password field for passwords
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
+
+# Good: Use boolean field for true/false values
+FieldFactory.boolean_field("is_active", "Active")
 ```
 
-### 3. Use Validation
+### 2. Provide Meaningful Validation
 
 ```python
-# Good: Add validation
-FieldView.text_field("email", "Email",
-                    pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
-FieldView.number_field("age", "Age",
-                      min_value=0, max_value=120)
+# Good: Validate required fields
+FieldFactory.string_field("username", "Username", required=True, min_length=3)
+
+# Good: Validate email format
+FieldFactory.email_field("email", "Email", required=True)
+
+# Good: Validate password strength
+FieldFactory.password_field("password", "Password", required=True, min_length=8)
 ```
 
-### 4. Consider User Experience
+### 3. Use Relationships Efficiently
 
 ```python
-# Good: Add helpful placeholders and labels
-FieldView.text_field("username", "Username",
-                    placeholder="Enter your username")
-FieldView.textarea_field("description", "Description",
-                        placeholder="Describe your item...")
+# Good: Use many-to-many for multiple selections
+FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name")
+
+# Good: Use foreign key for single selections
+FieldFactory.foreign_key_field("department_id", "Department", model_class=Department, field_title="name")
 ```
 
-## Widget Examples
-
-### Complete Form Example
+### 4. Organize Fields Logically
 
 ```python
-class ProductView(AdminView):
-    model = Product
-    label = "Products"
+fields = [
+    # Primary key first
+    FieldFactory.primarykey_field("id", "ID"),
 
-    def get_form_fields(self):
-        return [
-            # Basic information
-            FieldView.text_field("name", "Product Name", required=True),
-            FieldView.textarea_field("description", "Description"),
+    # Basic information
+    FieldFactory.string_field("username", "Username", required=True),
+    FieldFactory.string_field("first_name", "First Name", required=True),
+    FieldFactory.string_field("last_name", "Last Name", required=True),
+    FieldFactory.email_field("email", "Email", required=True),
 
-            # Pricing
-            FieldView.float_field("price", "Price", min_value=0),
-            FieldView.choice_field("currency", "Currency",
-                                 choices=[("USD", "USD"), ("EUR", "EUR")]),
+    # Security
+    FieldFactory.password_field("password", "Password", required=True, min_length=8),
+    FieldFactory.boolean_field("is_active", "Active"),
 
-            # Status
-            FieldView.switch_field("is_active", "Active", default=True),
-            FieldView.choice_field("status", "Status",
-                                 choices=status_choices, default="draft"),
-
-            # Categories
-            FieldView.foreign_key_field("category_id", "Category", model=Category),
-            FieldView.multi_choice_field("tags", "Tags",
-                                       choices=tag_choices, max_selections=5),
-
-            # Media
-            FieldView.image_field("image", "Product Image"),
-            FieldView.file_field("manual", "User Manual",
-                               accept=".pdf,.doc,.docx"),
-
-            # Metadata
-            FieldView.json_field("metadata", "Additional Data"),
-            FieldView.color_field("brand_color", "Brand Color"),
-
-            # Dates
-            FieldView.date_field("release_date", "Release Date"),
-            FieldView.datetime_field("last_updated", "Last Updated"),
-        ]
+    # Relationships
+    FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+]
 ```
 
 ## Next Steps
 
-- **[Field Types](field-types.md)** - Learn about field types and their capabilities
-- **[Admin Models](admin-models.md)** - Configure advanced admin features
-- **[Custom Fields](../advanced/custom-fields.md)** - Create custom field types and widgets
+- **[Field Types](field-types.md)** - Learn about all available field types
+- **[Admin Models](admin-models.md)** - Configure admin interfaces
+- **[Authentication](authentication.md)** - Set up user management
+- **[CLI Commands](cli-commands.md)** - Learn about development tools
