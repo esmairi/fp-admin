@@ -5,6 +5,7 @@ from sqlmodel import SQLModel
 
 from fp_admin.admin.models import model_registry
 from fp_admin.exceptions import ModelError, ValidationError
+from fp_admin.utils.error_serialization import serialize_field_errors
 
 
 def get_relationship_fields(model_class: Type[SQLModel]) -> List[str]:
@@ -39,28 +40,6 @@ def get_model_class(model_name: str) -> Type[SQLModel]:
     if not model_class:
         raise ModelError(f"Model [{model_name}] not found in registry")
     return model_class
-
-
-def serialize_field_errors(
-    field_errors: Dict[str, Any],
-) -> Dict[str, List[Dict[str, str]]]:
-    """Convert FieldError objects or dicts to serializable dicts."""
-    serialized_errors: Dict[str, List[Dict[str, str]]] = {}
-    for field_name, errors in field_errors.items():
-        serialized_errors[field_name] = []
-        for error in errors:
-            if hasattr(error, "to_dict"):
-                serialized_errors[field_name].append(error.to_dict())
-            elif isinstance(error, dict):
-                serialized_errors[field_name].append(error)
-            else:
-                serialized_errors[field_name].append(
-                    {
-                        "code": getattr(error, "code", "UNKNOWN").upper(),
-                        "message": getattr(error, "message", str(error)),
-                    }
-                )
-    return serialized_errors
 
 
 def raise_serialized_validation_error(

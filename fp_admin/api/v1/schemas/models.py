@@ -6,18 +6,9 @@ This module provides serialization schemas for the models API endpoints.
 
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
-
-class BaseSchema(BaseModel):
-    """Base schema class with common configuration."""
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        validate_assignment=True,
-        extra="forbid",
-        str_strip_whitespace=True,
-    )
+from fp_admin.schemas.base import BaseSchema
 
 
 class CreateRecordRequestSchema(BaseSchema):

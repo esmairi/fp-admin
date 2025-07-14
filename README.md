@@ -105,6 +105,17 @@ fp-admin run
 
 Visit `http://localhost:8000/admin` to access your admin interface!
 
+## 📖 Documentation
+
+📚 **Complete documentation is available at**: [https://esmairi.github.io/fp-admin/](https://esmairi.github.io/fp-admin/)
+
+The documentation includes:
+- **Getting Started**: Installation, quick start, and core concepts
+- **User Guide**: Field types, widgets, admin models, authentication, and CLI commands
+- **API Reference**: Complete REST API documentation
+- **Advanced Topics**: Error handling, custom fields, and advanced configurations
+- **Development**: Contributing guidelines and testing instructions
+
 ## 📚 Core Concepts
 
 ### FieldView System

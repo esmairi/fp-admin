@@ -10,6 +10,7 @@ from typing import Any, Dict
 from fastapi import HTTPException
 
 from fp_admin.exceptions import ValidationError
+from fp_admin.utils.error_serialization import serialize_field_errors
 
 
 class ErrorResponseBuilder:
@@ -32,24 +33,7 @@ class ErrorResponseBuilder:
             field_errors = validation_error.details.get("field_errors", {})
 
         # Convert FieldError objects to dictionaries if needed
-        serialized_errors: dict[str, list[dict[str, str]]] = {}
-        for field_name, errors in field_errors.items():
-            serialized_errors[field_name] = []
-            for error in errors:
-                if hasattr(error, "to_dict"):
-                    # FieldError object
-                    serialized_errors[field_name].append(error.to_dict())
-                elif isinstance(error, dict):
-                    # Already a dictionary
-                    serialized_errors[field_name].append(error)
-                else:
-                    # Fallback: try to convert to dict
-                    serialized_errors[field_name].append(
-                        {
-                            "code": getattr(error, "code", "UNKNOWN").upper(),
-                            "message": getattr(error, "message", str(error)),
-                        }
-                    )
+        serialized_errors = serialize_field_errors(field_errors)
 
         return {
             "type": "https://fp-admin.com/errors/field-validation",

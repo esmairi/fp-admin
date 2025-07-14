@@ -149,6 +149,7 @@ class SystemInfo(BaseResponse):
     uptime: float = Field(description="Application uptime in seconds")
 
 
+# Re-export for backward compatibility and to avoid duplicate code
 __all__ = [
     "BaseSchema",
     "BaseRequest",
