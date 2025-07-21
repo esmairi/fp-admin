@@ -52,9 +52,9 @@ class FastAPIAdmin(FastAPI):
             lifespan=combined_lifespan,
             **kwargs,
         )
-        self.setup()
+        self.__setup()
 
-    def setup(self) -> None:
+    def __setup(self) -> None:
         """Set up the admin application."""
         from fp_admin.api import api_router
         from fp_admin.core.loader import load_modules

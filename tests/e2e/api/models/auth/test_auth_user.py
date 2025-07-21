@@ -4,6 +4,10 @@ Integration test for the update endpoint using existing auth models.
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlmodel import Session
+
+from fp_admin.apps.auth.models import User
+from fp_admin.apps.auth.services import pwd_context
 
 pytestmark = pytest.mark.e2e
 
@@ -24,7 +28,7 @@ class TestUpdateIntegration:
             }
         }
 
-        create_response = client.post("/api/v1/models/user", json=user_data)
+        create_response = client.post("/api/v1/auth/signup", json=user_data)
         assert create_response.status_code == 200
 
         created_user = create_response.json()["data"]
@@ -93,3 +97,25 @@ class TestUpdateIntegration:
         assert "data" in result
         assert result["data"]["username"] == "testuser_create"
         assert result["data"]["email"] == "formupdated@example.com"
+
+    def test_signin(
+        self, client: TestClient, session: Session, regular_user: User
+    ) -> None:
+        """Test signin."""
+        user_password = regular_user.password
+        regular_user.password = pwd_context.hash(regular_user.password)
+        session.add(regular_user)
+        session.commit()
+        session.refresh(regular_user)
+        payload = {
+            "data": {
+                "username": regular_user.username,
+                "password": user_password,
+            }
+        }
+        response = client.post("/api/v1/auth/signin", json=payload)
+
+        assert response.status_code == 200
+        result = response.json()
+        assert result["data"]["access_token"]
+        assert result["data"]["refresh_token"]

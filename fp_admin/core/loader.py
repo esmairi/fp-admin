@@ -31,7 +31,7 @@ def load_app_routers(app: "FastAPIAdmin") -> None:
             module = importlib.import_module(f"{app_path}.routers")
             router = getattr(module, "router", None)
             if router:
-                router_path = f"{settings.ADMIN_PATH}/{app_path.split('.')[-1]}"
+                router_path = f"{settings.ADMIN_PATH}/{settings.API_VERSION}"
                 app.include_router(router, prefix=router_path)
                 logger.info("✅ Registered router from %s", app_path)
             else:

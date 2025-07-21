@@ -1,5 +1,6 @@
 # Field validation functions extracted from FieldView
 import re
+from datetime import datetime
 from typing import TYPE_CHECKING, Any, Callable, List, Optional, Union
 
 from pydantic import BaseModel
@@ -183,7 +184,7 @@ class FieldValidator:
     def validate_number(cls, field_view: "FieldView", value: Any) -> List[FieldError]:
         """Validate number field value."""
         try:
-            float(value)
+            int(value)
         except (ValueError, TypeError):
             field_name = field_view.title or field_view.name
             return [
@@ -230,7 +231,12 @@ class FieldValidator:
     @classmethod
     def validate_date(cls, field_view: "FieldView", value: Any) -> List[FieldError]:
         """Validate date field value."""
-        if not isinstance(value, str):
+        if isinstance(value, datetime):
+            return []
+        try:
+            datetime.fromisoformat(value)
+            return []
+        except (ValueError, TypeError):
             field_name = field_view.title or field_view.name
             return [
                 FieldError(
@@ -238,7 +244,6 @@ class FieldValidator:
                     message=get_error_message("TYPE_DATE", field_name=field_name),
                 )
             ]
-        return []
 
     @classmethod
     def validate_time(cls, field_view: "FieldView", value: Any) -> List[FieldError]:
@@ -256,7 +261,12 @@ class FieldValidator:
     @classmethod
     def validate_datetime(cls, field_view: "FieldView", value: Any) -> List[FieldError]:
         """Validate datetime field value."""
-        if not isinstance(value, str):
+        if isinstance(value, datetime):
+            return []
+        try:
+            datetime.fromisoformat(value)
+            return []
+        except (ValueError, TypeError):
             field_name = field_view.title or field_view.name
             return [
                 FieldError(
@@ -264,4 +274,3 @@ class FieldValidator:
                     message=get_error_message("TYPE_DATETIME", field_name=field_name),
                 )
             ]
-        return []
