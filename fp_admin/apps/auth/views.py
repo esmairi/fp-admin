@@ -10,24 +10,66 @@ class UserFormView(BaseViewBuilder):
 
     fields = [
         FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field(
-            "username",
-            "Username",
-            required=True,
-        ),
+        FieldFactory.string_field("username", "Username", required=True),
         FieldFactory.email_field("email", "Email", required=True),
         FieldFactory.password_field(
             "password", "Password", required=True, min_length=8
         ),
+        FieldFactory.string_field("first_name", "First Name"),
+        FieldFactory.string_field("last_name", "Last Name"),
+        FieldFactory.choice_field(
+            "gender",
+            "Gender",
+            options={
+                "choices": [
+                    ("male", "Male"),
+                    ("female", "Female"),
+                    ("non-binary", "Non-binary"),
+                    ("other", "Other"),
+                    ("prefer_not_to_say", "Prefer not to say"),
+                ]
+            },
+        ),
         FieldFactory.boolean_field("is_active", "Active"),
         FieldFactory.boolean_field("is_superuser", "Superuser"),
+        FieldFactory.boolean_field("is_deleted", "Deleted"),
+        FieldFactory.boolean_field("email_verified", "Email Verified"),
+        FieldFactory.datetime_field("last_login", "Last Login"),
+        FieldFactory.string_field("avatar_url", "Avatar URL"),
+        FieldFactory.string_field("bio", "Bio"),
         FieldFactory.many_to_many_field(
             "groups", "Groups", model_class=Group, field_title="name"
         ),
+        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.datetime_field("updated_at", "Updated At"),
     ]
 
-    creation_fields = ["username", "email", "password", "is_active", "is_superuser"]
-    allowed_update_fields = ["email", "is_active", "is_superuser"]
+    creation_fields = [
+        "username",
+        "email",
+        "password",
+        "first_name",
+        "last_name",
+        "gender",
+        "is_active",
+        "is_superuser",
+        "is_deleted",
+        "email_verified",
+        "avatar_url",
+        "bio",
+    ]
+    allowed_update_fields = [
+        "email",
+        "first_name",
+        "last_name",
+        "gender",
+        "is_active",
+        "is_superuser",
+        "is_deleted",
+        "email_verified",
+        "avatar_url",
+        "bio",
+    ]
 
 
 class UserListView(BaseViewBuilder):
@@ -38,8 +80,30 @@ class UserListView(BaseViewBuilder):
         FieldFactory.primarykey_field("id", "ID"),
         FieldFactory.string_field("username", "Username"),
         FieldFactory.email_field("email", "Email"),
+        FieldFactory.string_field("first_name", "First Name"),
+        FieldFactory.string_field("last_name", "Last Name"),
+        FieldFactory.choice_field(
+            "gender",
+            "Gender",
+            options={
+                "choices": [
+                    ("male", "Male"),
+                    ("female", "Female"),
+                    ("non-binary", "Non-binary"),
+                    ("other", "Other"),
+                    ("prefer_not_to_say", "Prefer not to say"),
+                ]
+            },
+        ),
         FieldFactory.boolean_field("is_active", "Active"),
         FieldFactory.boolean_field("is_superuser", "Superuser"),
+        FieldFactory.boolean_field("is_deleted", "Deleted"),
+        FieldFactory.boolean_field("email_verified", "Email Verified"),
+        FieldFactory.datetime_field("last_login", "Last Login"),
+        FieldFactory.string_field("avatar_url", "Avatar URL"),
+        FieldFactory.string_field("bio", "Bio"),
+        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.datetime_field("updated_at", "Updated At"),
     ]
 
 

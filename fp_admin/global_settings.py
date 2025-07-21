@@ -27,13 +27,16 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(
         default=30, description="JWT access token expiration time"
     )
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(
+        default=90, description="JWT refresh token expiration time"
+    )
     LOG_FORMAT: str = Field(
         default=DEFAULT_LOG_FORMAT, description="Log message format"
     )
 
     # Caching settings
     CACHE_URL: Optional[str] = Field(
-        default=None, description="Cache backend URL (Redis, etc.)"
+        default=None, description="Cache backend URL (Redis)"
     )
     CACHE_TTL: int = Field(default=3600, description="Default cache TTL in seconds")
     CORS_ORIGINS: List[str] = Field(

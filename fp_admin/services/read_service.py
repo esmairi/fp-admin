@@ -72,3 +72,8 @@ class ReadService:
             fields=fields,
             include_relationships=include_relationships,
         )
+
+    def search_records(self, model_name: str, **filters: Any) -> List[Dict[str, Any]]:
+        """Search records for a model."""
+        model_class = get_model_class(model_name)
+        return self.service.filter(model_class, **filters)

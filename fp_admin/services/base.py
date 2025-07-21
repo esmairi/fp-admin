@@ -332,7 +332,7 @@ class BaseService:
                 f"Failed to check existence of {model_class.__name__}: {e}"
             ) from e
 
-    def filter(self, model_class: Type[T], **filters: Any) -> List[T]:
+    def filter(self, model_class: Type[T], **filters: Any) -> List[Dict[str, Any]]:
         """Filter model instances by criteria.
 
         Args:
@@ -347,7 +347,8 @@ class BaseService:
                 query = select(model_class)
                 for field, value in filters.items():
                     query = query.where(getattr(model_class, field) == value)
-                return cast(List[T], session.exec(query).all())
+                records = session.exec(query).all()
+                return [record.model_dump() for record in records]
         except Exception as e:
             self.logger.error("Error filtering %s: %s", model_class.__name__, e)
             raise ServiceError(f"Failed to filter {model_class.__name__}: {e}") from e

@@ -25,6 +25,7 @@ dependencies = [
     "alembic",
     "passlib[bcrypt]",
     "uvicorn",
+    "pyjwt>=2.10.1",
 ]
 [project.scripts]
 fp-admin = "fp_admin.cli:admin_cli"

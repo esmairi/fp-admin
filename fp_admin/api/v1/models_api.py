@@ -85,7 +85,6 @@ async def create_record(
         created_record = service.create_record(model_name, params)
         return ModelRecordByIdResponseSchema(data=created_record)
     except ValidationError as e:
-        # Handle validation errors with standardized error response
         raise handle_validation_error(e) from e
     except ModelError as e:
         # Handle other ModelError cases

@@ -43,13 +43,12 @@ def startproject(name: str) -> None:
 
     project_dir.mkdir(parents=True)
     Path(project_dir / "apps").mkdir()
-    for template in ["app", "settings", "requirements"]:
+    for template in ["app", "settings"]:
         render_template(template)
 
     typer.echo(f"✅ Project '{name}' created")
     typer.echo("📁 Next steps:")
     typer.echo(f"   cd {name}")
-    typer.echo("   pip install -r requirements.txt")
     typer.echo("   fp-admin startapp <app_name>")
     typer.echo("   fp-admin make-migrations initial")
     typer.echo("   fp-admin migrate")
