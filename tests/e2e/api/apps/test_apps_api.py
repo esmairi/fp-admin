@@ -2,12 +2,15 @@
 End-to-end tests for the apps API endpoints.
 """
 
+import pytest
 
-def test_apps_response(client):
+
+@pytest.mark.asyncio
+async def test_apps_response(client):
     """Test that the /api/v1/apps/ endpoint returns the expected response structure."""
     response = client.get("/api/v1/apps/")
     assert response.status_code == 200
-
+    print(response.json())
     # Assert the whole response
     assert response.json() == [
         {
@@ -25,6 +28,11 @@ def test_apps_response(client):
                     "name": "grouppermissionlink",
                     "label": "GroupPermissionLink",
                     "url": "/api/v1/models/grouppermissionlink",
+                },
+                {
+                    "name": "userpermissionlink",
+                    "label": "GroupPermissionLink",
+                    "url": "/api/v1/models/userpermissionlink",
                 },
                 {
                     "name": "usergrouplink",

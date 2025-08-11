@@ -5,9 +5,9 @@ This module defines all blog-related views with comprehensive field types
 to demonstrate all available fp-admin field capabilities.
 """
 
-from fp_admin.admin.fields import FieldFactory
-from fp_admin.admin.views import BaseViewBuilder
 from fp_admin.apps.auth.models import User
+from fp_admin.models.field import FieldFactory
+from fp_admin.registry import ViewBuilder
 
 from .models import (
     Analytics,
@@ -21,102 +21,102 @@ from .models import (
 
 
 # Category Views
-class CategoryFormView(BaseViewBuilder):
+class CategoryFormView(ViewBuilder):
     model = Category
     view_type = "form"
     name = "CategoryForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, max_length=100),
-        FieldFactory.string_field("slug", "Slug", required=True, max_length=100),
-        FieldFactory.textarea_field("description", "Description", max_length=500),
-        FieldFactory.color_field("color", "Color", max_length=7),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name", required=True, max_length=100),
+        FieldFactory.string_field("slug", title="Slug", required=True, max_length=100),
+        FieldFactory.text_field("description", title="Description", max_length=500),
+        FieldFactory.boolean_field("is_active", title="Active"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("updated_at", title="Updated At"),
     ]
 
-    creation_fields = ["name", "slug", "description", "color", "is_active"]
-    allowed_update_fields = ["name", "slug", "description", "color", "is_active"]
+    creation_fields = ["name", "slug", "description", "is_active"]
+    allowed_update_fields = ["name", "slug", "description", "is_active"]
 
 
-class CategoryListView(BaseViewBuilder):
+class CategoryListView(ViewBuilder):
     model = Category
     view_type = "list"
     name = "CategoryList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("slug", "Slug"),
-        FieldFactory.color_field("color", "Color"),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name"),
+        FieldFactory.string_field("slug", title="Slug"),
+        FieldFactory.boolean_field("is_active", title="Active"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
     ]
 
 
 # Tag Views
-class TagFormView(BaseViewBuilder):
+class TagFormView(ViewBuilder):
     model = Tag
     view_type = "form"
     name = "TagForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, max_length=50),
-        FieldFactory.string_field("slug", "Slug", required=True, max_length=50),
-        FieldFactory.textarea_field("description", "Description", max_length=200),
-        FieldFactory.number_field("usage_count", "Usage Count", min_value=0),
-        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name", required=True, max_length=50),
+        FieldFactory.string_field("slug", title="Slug", required=True, max_length=50),
+        FieldFactory.text_field("description", title="Description", max_length=200),
+        FieldFactory.number_field("usage_count", title="Usage Count", gt=0),
+        FieldFactory.datetime_field("created_at", title="Created At"),
     ]
 
     creation_fields = ["name", "slug", "description", "usage_count"]
     allowed_update_fields = ["name", "slug", "description", "usage_count"]
 
 
-class TagListView(BaseViewBuilder):
+class TagListView(ViewBuilder):
     model = Tag
     view_type = "list"
     name = "TagList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("slug", "Slug"),
-        FieldFactory.number_field("usage_count", "Usage Count"),
-        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name"),
+        FieldFactory.string_field("slug", title="Slug"),
+        FieldFactory.number_field("usage_count", title="Usage Count"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
     ]
 
 
 # Post Views
-class PostFormView(BaseViewBuilder):
+class PostFormView(ViewBuilder):
     model = Post
     view_type = "form"
     name = "PostForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("title", "Title", required=True, max_length=200),
-        FieldFactory.string_field("slug", "Slug", required=True, max_length=200),
-        FieldFactory.textarea_field("excerpt", "Excerpt", max_length=500),
-        FieldFactory.textarea_field("content", "Content", required=True),
-        FieldFactory.textarea_field(
-            "meta_description", "Meta Description", max_length=160
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field(
+            "title", title="Title", required=True, max_length=200
         ),
-        FieldFactory.number_field("view_count", "View Count", min_value=0),
-        FieldFactory.number_field("like_count", "Like Count", min_value=0),
-        FieldFactory.number_field("comment_count", "Comment Count", min_value=0),
+        FieldFactory.string_field("slug", title="Slug", required=True, max_length=200),
+        FieldFactory.text_field("excerpt", title="Excerpt", max_length=500),
+        FieldFactory.text_field("content", title="Content", required=True),
+        FieldFactory.text_field(
+            "meta_description", title="Meta Description", max_length=160
+        ),
+        FieldFactory.number_field("view_count", title="View Count", ge=0),
+        FieldFactory.number_field("like_count", title="Like Count", ge=0),
+        FieldFactory.number_field("comment_count", title="Comment Count", ge=0),
         FieldFactory.float_field(
-            "reading_time", "Reading Time (minutes)", min_value=0.0
+            "reading_time", title="Reading Time (minutes)", ge=0.0
         ),
-        FieldFactory.number_field("rating", "Rating", min_value=0.0, max_value=5.0),
-        FieldFactory.boolean_field("is_featured", "Featured"),
-        FieldFactory.switch_field("is_published", "Published"),
-        FieldFactory.switch_field("allow_comments", "Allow Comments"),
-        FieldFactory.boolean_field("is_premium", "Premium Content"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
-        FieldFactory.datetime_field("published_at", "Published At"),
-        FieldFactory.datetime_field("scheduled_at", "Scheduled At"),
+        FieldFactory.float_field("rating", title="Rating", ge=0.0, le=5.0),
+        FieldFactory.boolean_field("is_featured", title="Featured"),
+        FieldFactory.boolean_field("is_published", title="Is Published"),
+        FieldFactory.boolean_field("is_premium", title="Premium Content"),
+        FieldFactory.boolean_field("allow_comments", title="Allow comments"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("updated_at", title="Updated At"),
+        FieldFactory.datetime_field("published_at", title="Published At"),
+        FieldFactory.datetime_field("scheduled_at", title="Scheduled At"),
         FieldFactory.choice_field(
             "status",
-            "Status",
+            title="Status",
             options={
                 "choices": [
                     {"value": "draft", "label": "Draft"},
@@ -125,18 +125,18 @@ class PostFormView(BaseViewBuilder):
                 ]
             },
         ),
-        FieldFactory.file_field("featured_image", "Featured Image"),
-        FieldFactory.file_field("attachments", "Attachments"),
-        FieldFactory.json_field("seo_data", "SEO Data"),
-        FieldFactory.json_field("custom_fields", "Custom Fields"),
+        FieldFactory.file_field("featured_image", title="Featured Image"),
+        FieldFactory.file_field("attachments", title="Attachments"),
+        FieldFactory.json_field("seo_data", title="SEO Data"),
+        FieldFactory.json_field("custom_fields", title="Custom Fields"),
         FieldFactory.foreignkey_field(
-            "author_id", "Author", model_class=User, field_title="username"
+            "author_id", title="Author", model_class=User, display_field="username"
         ),
         FieldFactory.foreignkey_field(
-            "category_id", "Category", model_class=Category, field_title="name"
+            "category_id", title="Category", model_class=Category, display_field="name"
         ),
         FieldFactory.many_to_many_field(
-            "tags", "Tags", model_class=Tag, field_title="name"
+            "tags", title="Tags", model_class=Tag, display_field="name"
         ),
     ]
 
@@ -190,61 +190,69 @@ class PostFormView(BaseViewBuilder):
     ]
 
 
-class PostListView(BaseViewBuilder):
+class PostListView(ViewBuilder):
     model = Post
     view_type = "list"
     name = "PostList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("title", "Title"),
-        FieldFactory.string_field("slug", "Slug"),
-        FieldFactory.number_field("view_count", "Views"),
-        FieldFactory.number_field("like_count", "Likes"),
-        FieldFactory.number_field("comment_count", "Comments"),
-        FieldFactory.float_field("rating", "Rating"),
-        FieldFactory.boolean_field("is_featured", "Featured"),
-        FieldFactory.boolean_field("is_published", "Published"),
-        FieldFactory.boolean_field("is_premium", "Premium"),
-        FieldFactory.choice_field("status", "Status"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("published_at", "Published At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("title", title="Title"),
+        FieldFactory.string_field("slug", title="Slug"),
+        FieldFactory.number_field("view_count", title="Views"),
+        FieldFactory.number_field("like_count", title="Likes"),
+        FieldFactory.number_field("comment_count", title="Comments"),
+        FieldFactory.float_field("rating", title="Rating"),
+        FieldFactory.boolean_field("is_featured", title="Featured"),
+        FieldFactory.boolean_field("is_published", title="Published"),
+        FieldFactory.boolean_field("is_premium", title="Premium"),
+        FieldFactory.choice_field("status", title="Status"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("published_at", title="Published At"),
         FieldFactory.foreignkey_field(
-            "author_id", "Author", model_class=User, field_title="username"
+            "author_id", title="Author", model_class=User, display_field="username"
         ),
         FieldFactory.foreignkey_field(
-            "category_id", "Category", model_class=Category, field_title="name"
+            "category_id", title="Category", model_class=Category, display_field="name"
         ),
     ]
 
 
 # Comment Views
-class CommentFormView(BaseViewBuilder):
+class CommentFormView(ViewBuilder):
     model = Comment
     view_type = "form"
     name = "CommentForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.textarea_field("content", "Content", required=True),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.text_field("content", title="Content", required=True),
         FieldFactory.string_field(
-            "author_name", "Author Name", required=True, max_length=100
+            "author_name", title="Author Name", required=True, max_length=100
         ),
         FieldFactory.string_field(
-            "author_email", "Author Email", required=True, max_length=255
+            "author_email", title="Author Email", required=True, max_length=255
         ),
-        FieldFactory.string_field("author_website", "Author Website", max_length=255),
-        FieldFactory.float_field("rating", "Rating", min_value=1.0, max_value=5.0),
-        FieldFactory.boolean_field("is_approved", "Approved"),
-        FieldFactory.switch_field("is_spam", "Spam"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
+        FieldFactory.string_field(
+            "author_website", title="Author Website", max_length=255
+        ),
+        FieldFactory.float_field("rating", title="Rating", ge=1.0, le=5.0),
+        FieldFactory.boolean_field("is_approved", title="Approved"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("updated_at", title="Updated At"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title", required=True
+            "post_id",
+            title="Post",
+            model_class=Post,
+            display_field="title",
+            required=True,
         ),
         FieldFactory.foreignkey_field(
-            "parent_id", "Parent Comment", model_class=Comment, field_title="content"
+            "parent_id",
+            title="Parent Comment",
+            model_class=Comment,
+            display_field="content",
         ),
         FieldFactory.foreignkey_field(
-            "user_id", "User", model_class=User, field_title="username"
+            "user_id", title="User", model_class=User, display_field="username"
         ),
     ]
 
@@ -255,7 +263,6 @@ class CommentFormView(BaseViewBuilder):
         "author_website",
         "rating",
         "is_approved",
-        "is_spam",
         "post_id",
         "parent_id",
         "user_id",
@@ -267,49 +274,50 @@ class CommentFormView(BaseViewBuilder):
         "author_website",
         "rating",
         "is_approved",
-        "is_spam",
         "post_id",
         "parent_id",
         "user_id",
     ]
 
 
-class CommentListView(BaseViewBuilder):
+class CommentListView(ViewBuilder):
     model = Comment
     view_type = "list"
     name = "CommentList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("author_name", "Author"),
-        FieldFactory.string_field("author_email", "Email"),
-        FieldFactory.float_field("rating", "Rating"),
-        FieldFactory.boolean_field("is_approved", "Approved"),
-        FieldFactory.boolean_field("is_spam", "Spam"),
-        FieldFactory.datetime_field("created_at", "Created At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("author_name", title="Author"),
+        FieldFactory.string_field("author_email", title="Email"),
+        FieldFactory.float_field("rating", title="Rating"),
+        FieldFactory.boolean_field("is_approved", title="Approved"),
+        FieldFactory.boolean_field("is_spam", title="Spam"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title"
+            "post_id", title="Post", model_class=Post, display_field="title"
         ),
         FieldFactory.foreignkey_field(
-            "user_id", "User", model_class=User, field_title="username"
+            "user_id", title="User", model_class=User, display_field="username"
         ),
     ]
 
 
 # Newsletter Views
-class NewsletterFormView(BaseViewBuilder):
+class NewsletterFormView(ViewBuilder):
     model = Newsletter
     view_type = "form"
     name = "NewsletterForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("email", "Email", required=True, max_length=255),
-        FieldFactory.string_field("first_name", "First Name", max_length=100),
-        FieldFactory.string_field("last_name", "Last Name", max_length=100),
-        FieldFactory.switch_field("is_active", "Active"),
-        FieldFactory.switch_field("is_verified", "Verified"),
-        FieldFactory.datetime_field("subscribed_at", "Subscribed At"),
-        FieldFactory.datetime_field("verified_at", "Verified At"),
-        FieldFactory.json_field("preferences", "Preferences"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field(
+            "email", title="Email", required=True, max_length=255
+        ),
+        FieldFactory.string_field("first_name", title="First Name", max_length=100),
+        FieldFactory.string_field("last_name", title="Last Name", max_length=100),
+        FieldFactory.datetime_field("subscribed_at", title="Subscribed At"),
+        FieldFactory.datetime_field("verified_at", title="Verified At"),
+        FieldFactory.boolean_field("is_active", title="is Active"),
+        FieldFactory.boolean_field("is_verified", title="is Verified"),
+        FieldFactory.json_field("preferences", title="Preferences"),
     ]
 
     creation_fields = [
@@ -330,34 +338,38 @@ class NewsletterFormView(BaseViewBuilder):
     ]
 
 
-class NewsletterListView(BaseViewBuilder):
+class NewsletterListView(ViewBuilder):
     model = Newsletter
     view_type = "list"
     name = "NewsletterList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("email", "Email"),
-        FieldFactory.string_field("first_name", "First Name"),
-        FieldFactory.string_field("last_name", "Last Name"),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_verified", "Verified"),
-        FieldFactory.datetime_field("subscribed_at", "Subscribed At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("email", title="Email"),
+        FieldFactory.string_field("first_name", title="First Name"),
+        FieldFactory.string_field("last_name", title="Last Name"),
+        FieldFactory.boolean_field("is_active", title="Active"),
+        FieldFactory.boolean_field("is_verified", title="Verified"),
+        FieldFactory.datetime_field("subscribed_at", title="Subscribed At"),
     ]
 
 
 # PostTagLink Views (Many-to-Many Link Model)
-class PostTagLinkFormView(BaseViewBuilder):
+class PostTagLinkFormView(ViewBuilder):
     model = PostTagLink
     view_type = "form"
     name = "PostTagLinkForm"
     fields = [
-        FieldFactory.primarykey_field("post_id", "Post ID"),
-        FieldFactory.primarykey_field("tag_id", "Tag ID"),
+        FieldFactory.primary_key_field("post_id", title="Post ID"),
+        FieldFactory.primary_key_field("tag_id", title="Tag ID"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title", required=True
+            "post_id",
+            title="Post",
+            model_class=Post,
+            display_field="title",
+            required=True,
         ),
         FieldFactory.foreignkey_field(
-            "tag_id", "Tag", model_class=Tag, field_title="name", required=True
+            "tag_id", title="Tag", model_class=Tag, display_field="name", required=True
         ),
     ]
 
@@ -365,48 +377,48 @@ class PostTagLinkFormView(BaseViewBuilder):
     allowed_update_fields = ["post_id", "tag_id"]
 
 
-class PostTagLinkListView(BaseViewBuilder):
+class PostTagLinkListView(ViewBuilder):
     model = PostTagLink
     view_type = "list"
     name = "PostTagLinkList"
     fields = [
-        FieldFactory.primarykey_field("post_id", "Post ID"),
-        FieldFactory.primarykey_field("tag_id", "Tag ID"),
+        FieldFactory.primary_key_field("post_id", title="Post ID"),
+        FieldFactory.primary_key_field("tag_id", title="Tag ID"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title"
+            "post_id", title="Post", model_class=Post, display_field="title"
         ),
         FieldFactory.foreignkey_field(
-            "tag_id", "Tag", model_class=Tag, field_title="name"
+            "tag_id", title="Tag", model_class=Tag, display_field="name"
         ),
     ]
 
 
 # Analytics Views
-class AnalyticsFormView(BaseViewBuilder):
+class AnalyticsFormView(ViewBuilder):
     model = Analytics
     view_type = "form"
     name = "AnalyticsForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.primary_key_field("id", title="ID"),
         FieldFactory.string_field(
-            "page_url", "Page URL", required=True, max_length=500
+            "page_url", title="Page URL", required=True, max_length=500
         ),
-        FieldFactory.textarea_field("user_agent", "User Agent", max_length=500),
-        FieldFactory.string_field("ip_address", "IP Address", max_length=45),
-        FieldFactory.string_field("referrer", "Referrer", max_length=500),
+        FieldFactory.text_field("user_agent", title="User Agent", max_length=500),
+        FieldFactory.string_field("ip_address", title="IP Address", max_length=45),
+        FieldFactory.string_field("referrer", title="Referrer", max_length=500),
         FieldFactory.float_field(
-            "session_duration", "Session Duration (seconds)", min_value=0.0
+            "session_duration", title="Session Duration (seconds)", ge=0.0
         ),
         FieldFactory.number_field(
-            "scroll_depth", "Scroll Depth (%)", min_value=0.0, max_value=100.0
+            "scroll_depth", title="Scroll Depth (%)", ge=0.0, le=100.0
         ),
-        FieldFactory.boolean_field("is_bounce", "Bounce Visit"),
-        FieldFactory.datetime_field("visited_at", "Visited At"),
+        FieldFactory.boolean_field("is_bounce", title="Bounce Visit"),
+        FieldFactory.datetime_field("visited_at", title="Visited At"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title"
+            "post_id", title="Post", model_class=Post, display_field="title"
         ),
         FieldFactory.foreignkey_field(
-            "user_id", "User", model_class=User, field_title="username"
+            "user_id", title="User", model_class=User, display_field="username"
         ),
     ]
 
@@ -436,22 +448,22 @@ class AnalyticsFormView(BaseViewBuilder):
     ]
 
 
-class AnalyticsListView(BaseViewBuilder):
+class AnalyticsListView(ViewBuilder):
     model = Analytics
     view_type = "list"
     name = "AnalyticsList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("page_url", "Page URL"),
-        FieldFactory.string_field("ip_address", "IP Address"),
-        FieldFactory.float_field("session_duration", "Session Duration"),
-        FieldFactory.number_field("scroll_depth", "Scroll Depth"),
-        FieldFactory.boolean_field("is_bounce", "Bounce"),
-        FieldFactory.datetime_field("visited_at", "Visited At"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("page_url", title="Page URL"),
+        FieldFactory.string_field("ip_address", title="IP Address"),
+        FieldFactory.float_field("session_duration", title="Session Duration"),
+        FieldFactory.number_field("scroll_depth", title="Scroll Depth"),
+        FieldFactory.boolean_field("is_bounce", title="Bounce"),
+        FieldFactory.datetime_field("visited_at", title="Visited At"),
         FieldFactory.foreignkey_field(
-            "post_id", "Post", model_class=Post, field_title="title"
+            "post_id", title="Post", model_class=Post, display_field="title"
         ),
         FieldFactory.foreignkey_field(
-            "user_id", "User", model_class=User, field_title="username"
+            "user_id", title="User", model_class=User, display_field="username"
         ),
     ]

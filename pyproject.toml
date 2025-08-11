@@ -21,11 +21,12 @@ classifiers = [
 dependencies = [
     "fastapi[standard]",
     "pydantic-settings",
-    "sqlmodel",
+    "sqlmodel[asyncio]",
     "alembic",
     "passlib[bcrypt]",
     "uvicorn",
     "pyjwt>=2.10.1",
+    "aiosqlite>=0.21.0",
 ]
 [project.scripts]
 fp-admin = "fp_admin.cli:admin_cli"
@@ -40,6 +41,7 @@ dev = [
     "mypy-extensions==1.1.0",
     "pre-commit==4.2.0",
     "pytest==8.4.1",
+    "pytest-asyncio==0.24.0",
     "pytest-cov==5.0.0",
     "twine==6.1.0",
     "bandit==1.7.8",
@@ -52,7 +54,7 @@ Homepage = "https://github.com/esmairi/fp-admin"
 Repository = "https://github.com/esmairi/fp-admin"
 
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=66.1.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
@@ -63,7 +65,7 @@ exclude = ["tests*", "examples*", "docs*", ".venv*", ".git*", "*.egg-info*"]
 fp_admin = ["*.py", "*.pyi", "*.txt", "*.md"]
 
 [tool.setuptools.dynamic]
-version = {attr = "fp_admin.__version__"}
+version = { attr = "fp_admin.__version__" }
 
 
 [tool.black]
@@ -77,6 +79,7 @@ profile = "black"
 pythonpath = ["."]
 addopts = "-ra -q"
 testpaths = ["tests"]
+asyncio_mode = "auto"
 markers = [
     "e2e: End-to-end tests",
     "slow: Slow running tests",

@@ -2,46 +2,36 @@
 Error handling utilities for fp-admin API.
 
 This module provides standardized error response formatting
-following RFC 7807 Problem Details standard.
 """
 
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from fastapi import HTTPException
 
-from fp_admin.exceptions import ValidationError
-from fp_admin.utils.error_serialization import serialize_field_errors
+from fp_admin.models.views.exceptions import FieldErrorDetail
+
+
+def handle_validation_error(errors: List[FieldErrorDetail]) -> HTTPException:
+    """
+    Handle ValidationError and return standardized HTTPException.
+
+    Args:
+        errors: The ValidationError exception
+
+    Returns:
+        HTTPException
+    """
+    error_response = {
+        "type": "https://fp-admin.com/errors/field-validation",
+        "title": "Field Validation Error",
+        "status": 400,
+        "errors": [err.model_dump() for err in errors],
+    }
+    return HTTPException(status_code=400, detail=error_response)
 
 
 class ErrorResponseBuilder:
     """Builder for standardized error responses following RFC 7807."""
-
-    @staticmethod
-    def field_validation_error(validation_error: ValidationError) -> Dict[str, Any]:
-        """
-        Create a field validation error response.
-
-        Args:
-            validation_error: The ValidationError exception
-
-        Returns:
-            RFC 7807 compliant error response
-        """
-        # Handle both "errors" and "field_errors" keys for compatibility
-        field_errors = validation_error.details.get("errors", {})
-        if not field_errors:
-            field_errors = validation_error.details.get("field_errors", {})
-
-        # Convert FieldError objects to dictionaries if needed
-        serialized_errors = serialize_field_errors(field_errors)
-
-        return {
-            "type": "https://fp-admin.com/errors/field-validation",
-            "title": "Field Validation Error",
-            "status": 400,
-            "detail": "One or more fields failed validation",
-            "errors": serialized_errors,
-        }
 
     @staticmethod
     def model_error(message: str) -> Dict[str, Any]:
@@ -77,7 +67,7 @@ class ErrorResponseBuilder:
             "type": "https://fp-admin.com/errors/not-found",
             "title": "Resource Not Found",
             "status": 404,
-            "detail": f"{resource.capitalize()} '{identifier}' not found",
+            "errors": f"{resource.capitalize()} '{identifier}' not found",
         }
 
     @staticmethod
@@ -99,21 +89,7 @@ class ErrorResponseBuilder:
         }
 
 
-def handle_validation_error(validation_error: ValidationError) -> HTTPException:
-    """
-    Handle ValidationError and return standardized HTTPException.
-
-    Args:
-        validation_error: The ValidationError exception
-
-    Returns:
-        HTTPException with RFC 7807 compliant error response
-    """
-    error_response = ErrorResponseBuilder.field_validation_error(validation_error)
-    return HTTPException(status_code=400, detail=error_response)
-
-
-def handle_model_error(message: str) -> HTTPException:
+def handle_record_error(message: str) -> HTTPException:
     """
     Handle ModelError and return standardized HTTPException.
 

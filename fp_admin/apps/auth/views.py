@@ -1,25 +1,34 @@
-from fp_admin.admin.fields import FieldFactory
-from fp_admin.admin.views import BaseViewBuilder
 from fp_admin.apps.auth.models import Group, Permission, User
+from fp_admin.models.field import FieldFactory, FpFieldError, FpFieldValidator
+from fp_admin.registry import ViewBuilder
 
 
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
 
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username", required=True),
-        FieldFactory.email_field("email", "Email", required=True),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("username", title="Username", required=True),
+        FieldFactory.email_field("email", title="Email", required=True),
         FieldFactory.password_field(
-            "password", "Password", required=True, min_length=8
+            "password",
+            title="Password",
+            required=True,
+            validators=[
+                FpFieldValidator(
+                    name="min_length",
+                    condition_value=8,
+                    error=FpFieldError(code="too_short", message="Too short"),
+                )
+            ],
         ),
-        FieldFactory.string_field("first_name", "First Name"),
-        FieldFactory.string_field("last_name", "Last Name"),
+        FieldFactory.string_field("first_name", title="First Name"),
+        FieldFactory.string_field("last_name", title="Last Name"),
         FieldFactory.choice_field(
             "gender",
-            "Gender",
+            title="Gender",
             options={
                 "choices": [
                     ("male", "Male"),
@@ -30,20 +39,33 @@ class UserFormView(BaseViewBuilder):
                 ]
             },
         ),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-        FieldFactory.boolean_field("is_deleted", "Deleted"),
-        FieldFactory.boolean_field("email_verified", "Email Verified"),
-        FieldFactory.datetime_field("last_login", "Last Login"),
-        FieldFactory.string_field("avatar_url", "Avatar URL"),
-        FieldFactory.string_field("bio", "Bio"),
+        FieldFactory.boolean_field("is_active", title="Active"),
+        FieldFactory.boolean_field("is_superuser", title="Superuser"),
+        FieldFactory.boolean_field("is_deleted", title="Deleted"),
+        FieldFactory.boolean_field("email_verified", title="Email Verified"),
+        FieldFactory.datetime_field("last_login", title="Last Login"),
+        FieldFactory.string_field("avatar_url", title="Avatar URL"),
+        FieldFactory.string_field("bio", title="Bio"),
         FieldFactory.many_to_many_field(
-            "groups", "Groups", model_class=Group, field_title="name"
+            "groups", title="Groups", model_class=Group, display_field="name"
         ),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("updated_at", title="Updated At"),
     ]
 
+    display_fields = [
+        "username",
+        "email",
+        "first_name",
+        "last_name",
+        "gender",
+        "is_active",
+        "is_superuser",
+        "is_deleted",
+        "email_verified",
+        "avatar_url",
+        "bio",
+    ]
     creation_fields = [
         "username",
         "email",
@@ -57,6 +79,7 @@ class UserFormView(BaseViewBuilder):
         "email_verified",
         "avatar_url",
         "bio",
+        "groups",
     ]
     allowed_update_fields = [
         "email",
@@ -69,22 +92,23 @@ class UserFormView(BaseViewBuilder):
         "email_verified",
         "avatar_url",
         "bio",
+        "groups",
     ]
 
 
-class UserListView(BaseViewBuilder):
+class UserListView(ViewBuilder):
     model = User
     view_type = "list"
     name = "UserList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username"),
-        FieldFactory.email_field("email", "Email"),
-        FieldFactory.string_field("first_name", "First Name"),
-        FieldFactory.string_field("last_name", "Last Name"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("username", title="Username"),
+        FieldFactory.email_field("email", title="Email"),
+        FieldFactory.string_field("first_name", title="First Name"),
+        FieldFactory.string_field("last_name", title="Last Name"),
         FieldFactory.choice_field(
             "gender",
-            "Gender",
+            title="Gender",
             options={
                 "choices": [
                     ("male", "Male"),
@@ -95,84 +119,97 @@ class UserListView(BaseViewBuilder):
                 ]
             },
         ),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-        FieldFactory.boolean_field("is_deleted", "Deleted"),
-        FieldFactory.boolean_field("email_verified", "Email Verified"),
-        FieldFactory.datetime_field("last_login", "Last Login"),
-        FieldFactory.string_field("avatar_url", "Avatar URL"),
-        FieldFactory.string_field("bio", "Bio"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
+        FieldFactory.boolean_field("is_active", title="Active"),
+        FieldFactory.boolean_field("is_superuser", title="Superuser"),
+        FieldFactory.boolean_field("is_deleted", title="Deleted"),
+        FieldFactory.boolean_field("email_verified", title="Email Verified"),
+        FieldFactory.datetime_field("last_login", title="Last Login"),
+        FieldFactory.string_field("avatar_url", title="Avatar URL"),
+        FieldFactory.string_field("bio", title="Bio"),
+        FieldFactory.datetime_field("created_at", title="Created At"),
+        FieldFactory.datetime_field("updated_at", title="Updated At"),
     ]
 
 
-class GroupListView(BaseViewBuilder):
+class GroupListView(ViewBuilder):
     model = Group
     view_type = "list"
     name = "GroupList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("description", "Description"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name"),
+        FieldFactory.string_field("description", title="Description"),
     ]
 
 
-class GroupFormView(BaseViewBuilder):
+class GroupFormView(ViewBuilder):
     model = Group
     view_type = "form"
     name = "GroupForm"
 
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("name", title="Name", required=True, min_length=1),
         FieldFactory.string_field(
-            "description", "Description", required=True, min_length=1, max_length=200
+            "description",
+            title="Description",
+            required=True,
+            min_length=1,
+            max_length=200,
         ),
         FieldFactory.many_to_many_field(
-            "permissions", "Permissions", model_class=Permission, field_title="name"
+            "permissions",
+            title="Permissions",
+            model_class=Permission,
+            display_field="name",
         ),
         FieldFactory.many_to_many_field(
-            "users", "Users", model_class=User, field_title="username"
+            "users", title="Users", model_class=User, display_field="username"
         ),
     ]
 
-    creation_fields = ["name", "description"]
-    allowed_update_fields = ["name", "description", "permissions"]
+    display_fields = ["name", "description", "users"]
+    creation_fields = ["name", "description", "users", "permissions"]
+    allowed_update_fields = ["name", "description", "permissions", "users"]
 
 
-class PermissionListView(BaseViewBuilder):
+class PermissionListView(ViewBuilder):
     model = Permission
     view_type = "list"
     name = "PermissionList"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("codename", "Code Name"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("description", "Description"),
+        FieldFactory.primary_key_field("id", title="ID"),
+        FieldFactory.string_field("codename", title="Code Name"),
+        FieldFactory.string_field("name", title="Name"),
+        FieldFactory.string_field("description", title="Description"),
     ]
 
 
-class PermissionFormView(BaseViewBuilder):
+class PermissionFormView(ViewBuilder):
     model = Permission
     view_type = "form"
     name = "PermissionForm"
 
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.primary_key_field("id", title="ID"),
         FieldFactory.string_field(
-            "codename", "Code Name", required=True, min_length=1, max_length=150
+            "codename", title="Code Name", required=True, min_length=1, max_length=150
         ),
         FieldFactory.string_field(
-            "name", "Name", required=True, min_length=1, max_length=150
+            "name", title="Name", required=True, min_length=1, max_length=150
         ),
         FieldFactory.string_field(
-            "description", "Description", required=True, min_length=1, max_length=200
+            "description",
+            title="Description",
+            required=True,
+            min_length=1,
+            max_length=200,
         ),
         FieldFactory.many_to_many_field(
-            "groups", "Groups", model_class=Group, field_title="name"
+            "groups", title="Groups", model_class=Group, display_field="name"
         ),
     ]
 
+    display_fields = ["codename", "name", "description"]
     creation_fields = ["codename", "name", "description"]
     allowed_update_fields = ["codename", "name", "description"]

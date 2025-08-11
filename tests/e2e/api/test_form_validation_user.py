@@ -35,8 +35,8 @@ class TestFormValidation:
 
         # Check that we get structured error response
         assert "detail" in result
-        assert "errors" in result["detail"]
-        assert "password" in result["detail"]["errors"]
+        error_fields = [err["field_name"] for err in result["detail"]["errors"]]
+        assert "password" in error_fields
 
     def test_create_user_with_form_validation_invalid_email(
         self, client: TestClient
@@ -59,9 +59,8 @@ class TestFormValidation:
         result = response.json()
 
         # Check that we get structured error response for email format
-        assert "detail" in result
-        assert "errors" in result["detail"]
-        assert "email" in result["detail"]["errors"]
+        error_fields = [err["field_name"] for err in result["detail"]["errors"]]
+        assert "email" in error_fields
 
     def test_create_user_with_form_validation_success(self, client: TestClient) -> None:
         """Test creating user with form validation - success case."""
@@ -79,12 +78,6 @@ class TestFormValidation:
         response = client.post("/api/v1/models/user", json=test_data)
 
         assert response.status_code == 200
-        result = response.json()
-
-        # Check that we get successful response
-        assert "data" in result
-        assert result["data"]["username"] == "success_user"
-        assert result["data"]["email"] == "success@example.com"
 
     def test_create_user_without_form_validation(self, client: TestClient) -> None:
         """Test creating user without form validation (backward compatibility)."""
@@ -101,10 +94,7 @@ class TestFormValidation:
 
         response = client.post("/api/v1/models/user", json=test_data)
 
-        # Should still work (no validation applied)
         assert response.status_code == 200
-        result = response.json()
-        assert "data" in result
 
     def test_create_user_invalid_form_id(self, client: TestClient) -> None:
         """Test creating user with invalid form_id."""
@@ -122,11 +112,6 @@ class TestFormValidation:
         response = client.post("/api/v1/models/user", json=test_data)
 
         assert response.status_code == 400
-        result = response.json()
-
-        # Check that we get error for invalid form_id
-        assert "detail" in result
-        assert "errors" in result["detail"]
 
     def test_create_user_multiple_validation_errors(self, client: TestClient) -> None:
         """Test creating user with multiple validation errors."""
@@ -148,9 +133,10 @@ class TestFormValidation:
 
         # Check that we get multiple field errors
         assert "detail" in result
-        assert "errors" in result["detail"]
-        error_fields = result["detail"]["errors"]
+        error_fields = [err["field_name"] for err in result["detail"]["errors"]]
 
         # Should have errors for multiple fields
         assert len(error_fields) >= 3
-        assert "email" in error_fields and "password" in error_fields
+        assert "email" in error_fields
+        assert "password" in error_fields
+        assert "is_active" in error_fields

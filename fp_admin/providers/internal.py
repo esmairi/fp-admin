@@ -15,6 +15,9 @@ class TokenResponse(BaseModel, Generic[T]):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    expires_in: float
+    refresh_expires_in: float
+
     user: T
 
 
@@ -64,19 +67,18 @@ class InternalProvider(OAuth2Provider, Generic[T]):
         now = datetime.now(timezone.utc)
         access_exp = now + timedelta(minutes=self.access_token_expires_minutes)
         refresh_exp = now + timedelta(minutes=self.refresh_token_expires_minutes)
-        user_info = {
-            "id": user["id"],
-            "username": user["username"],
-            "email": user["email"],
-        }
         access_token = jwt.encode(
-            {"sub": user_info, "exp": access_exp.timestamp(), "type": "access"},
+            {"sub": user["username"], "exp": access_exp.timestamp(), "type": "access"},
             self.secret_key,
             algorithm=self.algorithm,
         )
 
         refresh_token = jwt.encode(
-            {"sub": user_info, "exp": refresh_exp.timestamp(), "type": "refresh"},
+            {
+                "sub": user["username"],
+                "exp": refresh_exp.timestamp(),
+                "type": "refresh",
+            },
             self.secret_key,
             algorithm=self.algorithm,
         )
@@ -84,6 +86,8 @@ class InternalProvider(OAuth2Provider, Generic[T]):
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
+            expires_in=access_exp.timestamp(),
+            refresh_expires_in=refresh_exp.timestamp(),
             token_type="bearer",
             user=cast(T, user),
         )
@@ -99,15 +103,22 @@ class InternalProvider(OAuth2Provider, Generic[T]):
             raise AuthError()
         return self.__issue_token(user)
 
-    def decode_token(self, token: str) -> Any:
-        return jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
+    def decode_token(self, token: str, username: str) -> Any:
+        return jwt.decode(
+            token, self.secret_key, algorithms=[self.algorithm], subject=username
+        )
 
-    def refresh_token(self, refresh_token: str, user: T) -> TokenResponse[T]:
+    def refresh_token(
+        self, refresh_token: str, user: Dict[str, Any]
+    ) -> TokenResponse[T]:
         try:
-            payload = self.decode_token(refresh_token)
-            if payload.get("type") != "refresh":  # check username
+            payload = self.decode_token(refresh_token, user["username"])
+            if (
+                payload.get("type") != "refresh"
+                or payload.get("exp") <= datetime.now().timestamp()
+            ):  # check username
                 raise AuthError()
         except Exception as e:
             raise AuthError() from e
 
-        return self.__issue_token(user)  # type: ignore
+        return self.__issue_token(user)
