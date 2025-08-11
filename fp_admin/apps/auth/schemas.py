@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import List, Literal, Optional, TypedDict
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from fp_admin.apps.auth.models import GenderEnum
 from fp_admin.providers.internal import TokenResponse
@@ -10,6 +10,10 @@ from fp_admin.providers.internal import TokenResponse
 class GroupResponse(BaseModel):
     id: int
     name: str
+
+
+class GroupRequest(BaseModel):
+    id: int
 
 
 class UserResponse(BaseModel):
@@ -28,7 +32,7 @@ class UserResponse(BaseModel):
     bio: Optional[str] = None
     created_at: datetime
     updated_at: datetime
-    groups: List[GroupResponse] = []
+    groups: Optional[List[GroupResponse]] = Field(default_factory=list)
 
 
 class SignupRequestData(BaseModel):
@@ -38,6 +42,7 @@ class SignupRequestData(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     gender: Optional[GenderEnum] = GenderEnum.PREFER_NOT_TO_SAY
+    groups: Optional[List[GroupRequest]] = Field(default_factory=list)
 
 
 class SignupRequest(BaseModel):

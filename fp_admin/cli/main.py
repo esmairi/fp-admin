@@ -105,10 +105,10 @@ def migrate() -> None:
 
 
 @admin_cli.command()
-def createsuperuser() -> None:
+async def createsuperuser() -> None:
     """Create a superuser account (alias for user createsuperuser)."""
 
-    user_createsuperuser()
+    await user_createsuperuser()
 
 
 @admin_cli.command()

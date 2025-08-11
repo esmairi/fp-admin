@@ -1,4 +1,3 @@
-import importlib.util
 from typing import Any
 
 from pydantic_settings import BaseSettings
@@ -10,6 +9,8 @@ class LazySettings:
     _settings_instance: BaseSettings | None = None
 
     def _load(self) -> BaseSettings:
+        import importlib.util
+
         if self._settings_instance not in [None, global_settings]:
             return self._settings_instance
 
