@@ -217,7 +217,7 @@ def python_tag():
         name="python",
         slug="python",
         description="Python programming language",
-        usage_count=0,
+        usage_count=1,
     )
 
 

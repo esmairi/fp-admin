@@ -4,20 +4,24 @@ Views API schemas for fp-admin.
 This module provides serialization schemas for the views API endpoints.
 """
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Type, Union
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_serializer
+from sqlmodel import SQLModel
 
 from fp_admin.exceptions import ViewError
+from fp_admin.models.field import FpFieldValidator
+from fp_admin.models.views import BaseView
 
 BaseViewInstanceSchema = Union["FormViewSchema", "ListViewSchema"]
 
 
-class FieldErrorSchema(BaseModel):
+class FieldErrorResponse(BaseModel):
     """Schema for field error information."""
 
-    message: str
-    code: Optional[str] = None
+    code: str
+    message: Optional[str] = None
+    field_name: str
 
 
 class WidgetConfig(BaseModel):
@@ -31,20 +35,30 @@ class FieldViewSchema(BaseModel):
     # pylint: disable=R0801
 
     name: str
+    field_type: str
     title: Optional[str] = None
     help_text: Optional[str] = None
-    field_type: str
     widget: Optional[str] = None
     required: bool = False
     readonly: bool = False
     disabled: bool = False
     placeholder: Optional[str] = None
-    default_value: Optional[Any] = None
+    default: Optional[Any] = None
     options: Optional[Dict[str, Any]] = None
-    error: Optional[FieldErrorSchema] = None
-    # validation: Optional[FieldValidationSchema] = None
+    validators: List[FpFieldValidator] = Field(default_factory=list)
     is_primary_key: bool = False
+    display_field: str | None
     # pylint: enable=R0801
+
+    @field_serializer("options", when_used="always")
+    def serialize_options(
+        self, options: Dict[str, Any] | None
+    ) -> Dict[str, Any] | None:
+        # Convert the SQLModel subclass (class object) into its class name
+        if options and options.get("model_class"):
+            options["model"] = str(getattr(options["model_class"], "__name__")).lower()
+            del options["model_class"]
+        return options
 
 
 class BaseViewSchema(BaseModel):
@@ -54,12 +68,17 @@ class BaseViewSchema(BaseModel):
 
     name: str
     view_type: Literal["form", "list"]
-    model: str
+    model: Type[SQLModel]
     fields: List[FieldViewSchema]
     default_form_id: Optional[str] = None
 
+    @field_serializer("model", when_used="always")
+    def serialize_model(self, model: Any) -> str:
+        # Convert the SQLModel subclass (class object) into its class name
+        return str(getattr(model, "__name__")).lower()
+
     @classmethod
-    def serialize_view(cls, view: "BaseViewSchema") -> "BaseViewInstanceSchema":
+    def serialize_view(cls, view: "BaseView") -> "BaseViewInstanceSchema":
         """Serialize a view object to the appropriate schema based on its type."""
         if view.view_type == "form":
             return FormViewSchema.model_validate(view)
@@ -72,8 +91,8 @@ class FormViewSchema(BaseViewSchema):
     """Schema for serializing FormView objects."""
 
     view_type: Literal["form"] = "form"
-    creation_fields: List[str]
-    allowed_update_fields: List[str]
+    creation_fields: List[str] = Field(default_factory=list)
+    allowed_update_fields: List[str] = Field(default_factory=list)
 
 
 class ListViewSchema(BaseViewSchema):

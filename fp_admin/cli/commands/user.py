@@ -5,15 +5,17 @@ User management commands for fp-admin CLI.
 from getpass import getpass
 
 import typer
+from fastapi import Depends
 from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from fp_admin.core.database import db_manager
+from fp_admin.core import get_session
 
 user_app = typer.Typer(name="user", help="User management commands")
 
 
 @user_app.command()
-def createsuperuser() -> None:
+async def createsuperuser(session: AsyncSession = Depends(get_session)) -> None:
     """Create a superuser account.
 
     Examples:
@@ -41,20 +43,19 @@ def createsuperuser() -> None:
         typer.echo("❌ Passwords do not match.")
         raise typer.Exit(code=1)
 
-    with db_manager.get_session() as session:
-        stmt = select(User).where(User.username == username)
-        exists = session.exec(stmt).first()
-        if exists:
-            typer.echo("❌ A user with that username already exists.")
-            raise typer.Exit(code=1)
+    stmt = select(User).where(User.username == username)
+    exists = await session.exec(stmt)
+    if exists.first():
+        typer.echo("❌ A user with that username already exists.")
+        raise typer.Exit(code=1)
 
-        user = User(
-            username=username,
-            email=email,
-            password=password,  # You should hash this in production
-            is_active=True,
-            is_superuser=True,
-        )
-        session.add(user)
-        session.commit()
-        typer.echo("✅ Superuser created successfully.")
+    user = User(
+        username=username,
+        email=email,
+        password=password,  # You should hash this in production
+        is_active=True,
+        is_superuser=True,
+    )
+    session.add(user)
+    await session.commit()
+    typer.echo("✅ Superuser created successfully.")

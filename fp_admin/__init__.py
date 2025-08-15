@@ -37,7 +37,7 @@ class FastAPIAdmin(FastAPI):
         async def combined_lifespan(app: FastAPI) -> AsyncGenerator[None, Any]:
             # 🚀 Startup
             if not disable_db_init:
-                db_manager.init_db()
+                await db_manager.init_db()
             if lifespan is not None:
                 async with lifespan(app):  # type: ignore
                     yield
