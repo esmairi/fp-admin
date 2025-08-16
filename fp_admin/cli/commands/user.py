@@ -7,13 +7,15 @@ from getpass import getpass
 import typer
 from sqlmodel import select
 
-from fp_admin.core.database import db_manager
+from fp_admin.apps.auth.schemas import SignupRequestData
+from fp_admin.apps.auth.services import pwd_context
+from fp_admin.core import db_manager
 
 user_app = typer.Typer(name="user", help="User management commands")
 
 
 @user_app.command()
-def createsuperuser() -> None:
+async def createsuperuser() -> None:
     """Create a superuser account.
 
     Examples:
@@ -35,26 +37,28 @@ def createsuperuser() -> None:
     email = typer.prompt("Email")
     password = getpass("Password: ")
     confirm = getpass("Confirm Password: ")
-    # password = bcrypt.hash(password)
-
     if password != confirm:
         typer.echo("❌ Passwords do not match.")
         raise typer.Exit(code=1)
 
-    with db_manager.get_session() as session:
+    hashed_password = pwd_context.hash(password)
+
+    async with db_manager.get_session() as session:
         stmt = select(User).where(User.username == username)
-        exists = session.exec(stmt).first()
-        if exists:
+        exists = await session.exec(stmt)
+        if exists.first():
             typer.echo("❌ A user with that username already exists.")
             raise typer.Exit(code=1)
-
+        SignupRequestData(
+            username=username, email=email, password=password
+        ).model_dump()
         user = User(
             username=username,
             email=email,
-            password=password,  # You should hash this in production
+            password=hashed_password,
             is_active=True,
             is_superuser=True,
         )
         session.add(user)
-        session.commit()
+        await session.commit()
         typer.echo("✅ Superuser created successfully.")

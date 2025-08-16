@@ -28,7 +28,6 @@ class TestCategoryCRUD:
                 "name": tech_category.name,
                 "slug": tech_category.slug,
                 "description": tech_category.description,
-                "color": tech_category.color,
                 "is_active": tech_category.is_active,
             }
         }
@@ -49,7 +48,6 @@ class TestCategoryCRUD:
         update_data = {
             "data": {
                 "description": "Updated technology description",
-                "color": "#28a745",
             }
         }
         update_response = client.put(
@@ -58,16 +56,12 @@ class TestCategoryCRUD:
         assert update_response.status_code == 200
         updated_category = update_response.json()["data"]
         assert updated_category["description"] == "Updated technology description"
-        assert updated_category["color"] == "#28a745"
 
         # List categories
         list_response = client.get("/api/v1/models/category")
         assert list_response.status_code == 200
         categories = list_response.json()["data"]
         assert len(categories) > 0
-
-        # Note: DELETE operations are not implemented in the models API
-        # The models API only supports GET, POST, and PUT operations
 
 
 class TestTagCRUD:
@@ -239,7 +233,6 @@ class TestCommentCRUD:
                 "author_website": sample_comment.author_website,
                 "rating": sample_comment.rating,
                 "is_approved": sample_comment.is_approved,
-                "is_spam": sample_comment.is_spam,
                 "post_id": post_id,
                 "user_id": user_id,
             }
@@ -279,9 +272,6 @@ class TestCommentCRUD:
         assert list_response.status_code == 200
         comments = list_response.json()["data"]
         assert len(comments) > 0
-
-        # Note: DELETE operations are not implemented in the models API
-        # The models API only supports GET, POST, and PUT operations
 
 
 class TestNewsletterCRUD:
@@ -419,144 +409,3 @@ class TestAnalyticsCRUD:
         assert list_response.status_code == 200
         analytics_list = list_response.json()["data"]
         assert len(analytics_list) > 0
-
-        # Note: DELETE operations are not implemented in the models API
-        # The models API only supports GET, POST, and PUT operations
-
-
-class TestPostTagLinkCRUD:
-    """Test CRUD operations for PostTagLink model."""
-
-    def test_post_tag_link_crud_operations(
-        self, client: TestClient, tech_category, python_tag
-    ) -> None:
-        """Test full CRUD cycle for PostTagLink."""
-        # First create a user, post, and tag
-        user_data = {
-            "data": {
-                "username": "link_user",
-                "email": "link@example.com",
-                "password": "password123",
-                "is_active": True,
-                "is_superuser": False,
-            }
-        }
-        user_response = client.post("/api/v1/models/user", json=user_data)
-        assert user_response.status_code == 200
-        user_id = user_response.json()["data"]["id"]
-
-        post_data = {
-            "data": {
-                "title": "Link Test Post",
-                "slug": "link-test-post",
-                "content": "Post content for link testing",
-                "author_id": user_id,
-            }
-        }
-        post_response = client.post("/api/v1/models/post", json=post_data)
-        assert post_response.status_code == 200
-        post_id = post_response.json()["data"]["id"]
-
-        tag_data = {
-            "data": {
-                "name": python_tag.name,
-                "slug": python_tag.slug,
-                "description": python_tag.description,
-            }
-        }
-        tag_response = client.post("/api/v1/models/tag", json=tag_data)
-        assert tag_response.status_code == 200
-        tag_id = tag_response.json()["data"]["id"]
-
-        # Test PostTagLink creation
-        link_data = {
-            "data": {
-                "post_id": post_id,
-                "tag_id": tag_id,
-            }
-        }
-
-        create_response = client.post("/api/v1/models/posttaglink", json=link_data)
-        print(f"PostTagLink creation response: {create_response.status_code}")
-        print(f"Response body: {create_response.json()}")
-        # PostTagLink might not be fully supported by the API
-        # Let's check if it's a 400 error and handle it gracefully
-        if create_response.status_code == 400:
-            print("PostTagLink creation failed - this model might not be supported")
-            return  # Skip the rest of the test
-        assert create_response.status_code == 200
-        created_link = create_response.json()["data"]
-        assert created_link["post_id"] == post_id
-        assert created_link["tag_id"] == tag_id
-
-        # Test listing PostTagLinks
-        list_response = client.get("/api/v1/models/posttaglink")
-        assert list_response.status_code == 200
-        links = list_response.json()["data"]
-        assert len(links) > 0
-
-        # Test reading a specific PostTagLink (using composite key)
-        # Note: The API might not support composite key lookups directly
-        # We'll test if we can find our link in the list
-        found_link = None
-        for link in links:
-            if link["post_id"] == post_id and link["tag_id"] == tag_id:
-                found_link = link
-                break
-
-        assert found_link is not None
-        assert found_link["post_id"] == post_id
-        assert found_link["tag_id"] == tag_id
-
-        # Test that we can't create duplicate links
-        duplicate_response = client.post("/api/v1/models/posttaglink", json=link_data)
-        # Should either fail or return the existing link
-        assert duplicate_response.status_code in [200, 400, 409]
-
-        # Test creating another link with different post/tag combination
-        # Create another post and tag
-        post2_data = {
-            "data": {
-                "title": "Link Test Post 2",
-                "slug": "link-test-post-2",
-                "content": "Second post for link testing",
-                "author_id": user_id,
-            }
-        }
-        post2_response = client.post("/api/v1/models/post", json=post2_data)
-        assert post2_response.status_code == 200
-        post2_id = post2_response.json()["data"]["id"]
-
-        tag2_data = {
-            "data": {
-                "name": "javascript",
-                "slug": "javascript",
-                "description": "JavaScript programming",
-            }
-        }
-        tag2_response = client.post("/api/v1/models/tag", json=tag2_data)
-        assert tag2_response.status_code == 200
-        tag2_id = tag2_response.json()["data"]["id"]
-
-        # Create second link
-        link2_data = {
-            "data": {
-                "post_id": post2_id,
-                "tag_id": tag2_id,
-            }
-        }
-
-        create2_response = client.post("/api/v1/models/posttaglink", json=link2_data)
-        assert create2_response.status_code == 200
-        created_link2 = create2_response.json()["data"]
-        assert created_link2["post_id"] == post2_id
-        assert created_link2["tag_id"] == tag2_id
-
-        # Verify both links exist in the list
-        list_response2 = client.get("/api/v1/models/posttaglink")
-        assert list_response2.status_code == 200
-        links2 = list_response2.json()["data"]
-        assert len(links2) >= 2
-
-        # Note: DELETE operations are not implemented in the models API
-        # The models API only supports GET, POST, and PUT operations

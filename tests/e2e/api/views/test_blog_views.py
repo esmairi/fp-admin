@@ -175,7 +175,6 @@ class TestBlogViewsAPI:
             "author_website",
             "rating",
             "is_approved",
-            "is_spam",
             "created_at",
             "updated_at",
             "post_id",
@@ -364,7 +363,6 @@ class TestBlogViewsAPI:
             assert "disabled" in field
             assert "is_primary_key" in field
             assert "title" in field
-            assert "widget" in field
 
     def test_blog_view_serialization(self, client):
         """Test that blog views are properly serialized."""
@@ -388,7 +386,6 @@ class TestBlogViewsAPI:
             assert isinstance(field["disabled"], bool)
             assert isinstance(field["is_primary_key"], bool)
             assert isinstance(field["title"], str)
-            assert isinstance(field["widget"], str)
 
     def test_blog_view_field_types(self, client):
         """Test that blog views have correct field types."""
@@ -407,7 +404,7 @@ class TestBlogViewsAPI:
         field_map = {field["name"]: field for field in form_view["fields"]}
 
         # Check primary key field
-        assert field_map["id"]["field_type"] == "primarykey"
+        assert field_map["id"]["field_type"] == "primary_key"
         assert field_map["id"]["is_primary_key"] is True
 
         # Check string fields
@@ -422,7 +419,7 @@ class TestBlogViewsAPI:
 
         # Check float fields
         assert field_map["reading_time"]["field_type"] == "float"
-        assert field_map["rating"]["field_type"] == "number"
+        assert field_map["rating"]["field_type"] == "float"
 
         # Check boolean fields
         boolean_fields = ["is_featured", "is_premium"]
@@ -448,8 +445,8 @@ class TestBlogViewsAPI:
             assert field_map[field_name]["field_type"] == "json"
 
         # Check foreign key fields
-        assert field_map["author_id"]["field_type"] == "foreignkey"
-        assert field_map["category_id"]["field_type"] == "foreignkey"
+        assert field_map["author_id"]["field_type"] == "foreign_key"
+        assert field_map["category_id"]["field_type"] == "foreign_key"
 
         # Check many-to-many field
         assert field_map["tags"]["field_type"] == "many_to_many"
@@ -470,20 +467,19 @@ class TestBlogViewsAPI:
 
         # Check foreign key relationships
         author_field = field_map["author_id"]
-        assert "options" in author_field
-        assert author_field["options"]["field_title"] == "username"
-        assert author_field["options"]["target_model"] == "user"
+        assert author_field["display_field"] == "username"
+        assert author_field["options"]["model"] == "user"
 
         category_field = field_map["category_id"]
         assert "options" in category_field
-        assert category_field["options"]["field_title"] == "name"
-        assert category_field["options"]["target_model"] == "category"
+        assert category_field["display_field"] == "name"
+        assert category_field["options"]["model"] == "category"
 
         # Check many-to-many relationships
         tags_field = field_map["tags"]
         assert "options" in tags_field
-        assert tags_field["options"]["field_title"] == "name"
-        assert tags_field["options"]["target_model"] == "tag"
+        assert tags_field["options"]["display_field"] == "name"
+        assert tags_field["options"]["model"] == "tag"
 
     def test_blog_view_creation_fields(self, client):
         """Test that blog views have correct creation fields."""

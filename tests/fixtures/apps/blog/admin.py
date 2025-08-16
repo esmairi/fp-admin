@@ -5,7 +5,7 @@ This module configures the admin interface for all blog models,
 following the simple pattern from the auth app.
 """
 
-from fp_admin.admin.models import AdminModel
+from fp_admin.registry import AdminModel
 
 from .models import Analytics, Category, Comment, Newsletter, Post, PostTagLink, Tag
 

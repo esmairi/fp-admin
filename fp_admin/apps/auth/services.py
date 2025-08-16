@@ -1,15 +1,16 @@
-from typing import Any, Dict, Optional, cast
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
 from passlib.context import CryptContext
-from sqlmodel import Session
+from sqlmodel import select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
+from fp_admin.providers.exceptions import AuthError
 from fp_admin.providers.internal import InternalProvider, TokenResponse
-from fp_admin.services.base import BaseService
-from fp_admin.services.create_service import CreateRecordParams, CreateService
+from fp_admin.schemas import CreateRecordParams
+from fp_admin.services.v1 import CreateService
 from fp_admin.settings_loader import settings
 
-from ...providers.exceptions import AuthError
 from .models import User
 from .schemas import (
     SignupRequestData,
@@ -17,27 +18,33 @@ from .schemas import (
     UserResponse,
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 class UserService:
-    def __init__(self, session: Session):
-        self.create_service = CreateService(session)
-        self.base_service = BaseService(session)
+    def __init__(self, session: AsyncSession):
+        self.create_service = CreateService(User, "user")
+        self.session = session
 
-    def create_user(self, data: SignupRequestData) -> SignupResponse:
+    async def create_user(self, data: SignupRequestData) -> SignupResponse:
+        stmt = select(User).where(User.username == data.username)
+        exists = await self.session.exec(stmt)
+        if exists.first():
+            raise ValueError("User already exists")
         data.password = pwd_context.hash(data.password)
         params = CreateRecordParams(data=data.model_dump(), form_id="UserForm")
-        user_dict = self.create_service.create_record("user", params)
+        user_dict: Dict[str, Any] = await self.create_service.create_record(
+            self.session, params, True
+        )  # type: ignore
         user_response = UserResponse(**user_dict)
         return SignupResponse(data=user_response, message="USER CREATED")
 
-    def get_user_by_username(self, username: str) -> Optional[User]:
-        users = self.base_service.filter(User, username=username)
+    async def get_user_by_username(self, username: str) -> Optional[User]:
+        users = await self.create_service.filter(self.session, username=username)
         return User(**users[0]) if users else None
 
     def serialize_user(self, user: User) -> Dict[str, Any]:
-        return self.base_service.serialize(user, include_relationships=True)
+        return user.model_dump()
 
     async def authenticate_and_issue_token(
         self, username: str, password: str
@@ -48,17 +55,17 @@ class UserService:
             raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
         return token_data
 
-    async def refresh_token(self, username: str, refresh_token: str) -> Any:
+    async def refresh_token(self, refresh_token: str, username: str) -> Any:
         provider = self.get_internal_provider()
-        user = self.get_user_by_username(username)
+        user = await self.get_user_by_username(username)
         if not user:
             raise AuthError()
-        return await provider.refresh_token(refresh_token, cast(UserResponse, user))
+        return provider.refresh_token(refresh_token, user.model_dump())
 
     async def user_auth_func(
         self, username: str, password: str
     ) -> Optional[Dict[str, Any]]:
-        user = self.base_service.filter(User, username=username)
+        user = await self.create_service.filter(self.session, username=username)
         if user and pwd_context.verify(password, user[0]["password"]):
             return user[0]
         return None

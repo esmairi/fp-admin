@@ -11,20 +11,6 @@ from pydantic import BaseModel
 from fp_admin.schemas.base import BaseSchema
 
 
-class CreateRecordRequestSchema(BaseSchema):
-    """Schema for create record request."""
-
-    data: Dict[str, Any]
-    form_id: Optional[str] = None
-
-
-class UpdateRecordRequestSchema(BaseSchema):
-    """Schema for update record request."""
-
-    data: Dict[str, Any]
-    form_id: Optional[str] = None
-
-
 class ModelRecordByIdResponseSchema(BaseSchema):
     """Schema for model record by ID response."""
 

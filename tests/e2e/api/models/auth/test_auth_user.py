@@ -4,7 +4,7 @@ Integration test for the update endpoint using existing auth models.
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from fp_admin.apps.auth.models import User
 from fp_admin.apps.auth.services import pwd_context
@@ -39,7 +39,8 @@ class TestUpdateIntegration:
             "data": {
                 "email": "updated@example.com",
                 "is_active": False,
-            }
+            },
+            "form_id": "UserForm",
         }
 
         response = client.put(f"/api/v1/models/user/{user_id}", json=update_data)
@@ -58,8 +59,7 @@ class TestUpdateIntegration:
 
         response = client.put("/api/v1/models/user/100", json=update_data)
 
-        assert response.status_code == 400
-        assert "not found" in response.json()["detail"]["detail"]
+        assert response.status_code == 404
 
     def test_update_user_with_form_validation(self, client: TestClient) -> None:
         """Test updating user with form validation."""
@@ -71,7 +71,8 @@ class TestUpdateIntegration:
                 "password": "<PASSWORD>",
                 "is_active": True,
                 "is_superuser": False,
-            }
+            },
+            "form_id": "UserForm",
         }
 
         create_response = client.post("/api/v1/models/user", json=user_data)
@@ -98,15 +99,16 @@ class TestUpdateIntegration:
         assert result["data"]["username"] == "testuser_create"
         assert result["data"]["email"] == "formupdated@example.com"
 
-    def test_signin(
-        self, client: TestClient, session: Session, regular_user: User
+    @pytest.mark.asyncio
+    async def test_signin(
+        self, client: TestClient, session: AsyncSession, regular_user: User
     ) -> None:
         """Test signin."""
         user_password = regular_user.password
         regular_user.password = pwd_context.hash(regular_user.password)
         session.add(regular_user)
-        session.commit()
-        session.refresh(regular_user)
+        await session.commit()
+        await session.refresh(regular_user)
         payload = {
             "data": {
                 "username": regular_user.username,

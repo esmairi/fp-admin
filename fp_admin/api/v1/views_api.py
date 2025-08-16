@@ -1,14 +1,14 @@
-from typing import Dict, List, cast
+from typing import Dict, List
 
 from fastapi import APIRouter
 
-from fp_admin.admin.views import view_registry
 from fp_admin.api.v1.schemas.views import (
     BaseViewInstanceSchema,
     BaseViewSchema,
     ModelViewsResponseSchema,
     ViewsResponseSchema,
 )
+from fp_admin.registry import view_registry
 
 views_api = APIRouter()
 
@@ -22,12 +22,12 @@ views_api = APIRouter()
 )
 def get_views() -> ViewsResponseSchema:
     """Get all registered views."""
-    views_data = view_registry.all()
+    views_data = view_registry.list()
     # Convert BaseView objects to appropriate schema for proper serialization
     serialized_views: Dict[str, List[BaseViewInstanceSchema]] = {}
     for model_name, views in views_data.items():
         serialized_views[model_name] = [
-            BaseViewSchema.serialize_view(cast(BaseViewSchema, view)) for view in views
+            BaseViewSchema.serialize_view(view) for view in views
         ]
     return ViewsResponseSchema(data=serialized_views)
 
@@ -41,8 +41,9 @@ def get_views() -> ViewsResponseSchema:
 )
 async def get_model_views(model_name: str) -> ModelViewsResponseSchema:
     """Get views for a specific model."""
-    views = [
-        BaseViewSchema.serialize_view(cast(BaseViewSchema, view))
-        for view in view_registry.get(model_name)
-    ]
+    views_data = view_registry.get(model_name)
+    if not views_data:
+        views = []
+    else:
+        views = [BaseViewSchema.serialize_view(view) for view in views_data]
     return ModelViewsResponseSchema(data=views)

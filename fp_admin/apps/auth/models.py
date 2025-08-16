@@ -31,13 +31,22 @@ class GroupPermissionLink(SQLModel, table=True, table_name="group_permission"):
     permission_id: int = Field(foreign_key="permission.id", primary_key=True)
 
 
+class UserPermissionLink(SQLModel, table=True, table_name="user_permission"):
+    user_id: int = Field(foreign_key="user.id", primary_key=True)
+    permission_id: int = Field(foreign_key="permission.id", primary_key=True)
+
+
 class Permission(TimestampedModel, SQLModel, table=True, table_name="permission"):
     id: Optional[int] = Field(default=None, primary_key=True)
     codename: str = Field(nullable=False, unique=True, max_length=150)
     name: str = Field(nullable=False, max_length=150)
     description: str = Field(title="Description", max_length=200)
     groups: List["Group"] = Relationship(
-        back_populates="permissions", link_model=GroupPermissionLink
+        back_populates="permissions",
+        link_model=GroupPermissionLink,
+    )
+    users: List["User"] = Relationship(
+        back_populates="permissions", link_model=UserPermissionLink
     )
 
 
@@ -77,6 +86,9 @@ class User(TimestampedModel, SQLModel, table=True, table_name="user"):
     bio: Optional[str] = Field(default=None, max_length=500)
 
     groups: List[Group] = Relationship(back_populates="users", link_model=UserGroupLink)
+    permissions: List[Permission] = Relationship(
+        back_populates="users", link_model=UserPermissionLink
+    )
     oauth_accounts: List["UserOAuthAccount"] = Relationship(back_populates="user")
 
 

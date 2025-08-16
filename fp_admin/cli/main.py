@@ -4,6 +4,8 @@ Main CLI application for fp-admin.
 This module provides the main CLI interface with commands organized by functionality.
 """
 
+import asyncio
+from functools import wraps
 from importlib.metadata import version as metadata_version
 
 import typer
@@ -105,10 +107,11 @@ def migrate() -> None:
 
 
 @admin_cli.command()
-def createsuperuser() -> None:
+@lambda f: wraps(f)(lambda *a, **kw: asyncio.run(f(*a, **kw)))
+async def createsuperuser() -> None:
     """Create a superuser account (alias for user createsuperuser)."""
 
-    user_createsuperuser()
+    await user_createsuperuser()
 
 
 @admin_cli.command()
