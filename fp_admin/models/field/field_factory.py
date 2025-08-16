@@ -80,22 +80,26 @@ class FieldFactory:  # pylint: disable=R0904
     @classmethod
     def toggle_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a string input field."""
-        return cls.boolean_field(name=name, widget="switch", **kwargs)
+        widget = kwargs.pop("widget", "switch")
+        return cls.boolean_field(name=name, widget=widget, **kwargs)
 
     @classmethod
     def chips_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a string input field."""
-        return cls.multichoice_field(name=name, widget="chips", **kwargs)
+        widget = kwargs.pop("widget", "chips")
+        return cls.multichoice_field(name=name, widget=widget, **kwargs)
 
     @classmethod
     def listbox_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a string input field."""
-        return cls.multichoice_field(name=name, widget="listBox", **kwargs)
+        widget = kwargs.pop("widget", "listBox")
+        return cls.multichoice_field(name=name, widget=widget, **kwargs)
 
     @classmethod
     def choice_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a string input field."""
-        return FpField(name=name, field_type="choice", widget="select", **kwargs)
+        widget = kwargs.pop("widget", "select")
+        return FpField(name=name, field_type="choice", widget=widget, **kwargs)
 
     @classmethod
     def multichoice_field(
@@ -112,7 +116,8 @@ class FieldFactory:  # pylint: disable=R0904
     @classmethod
     def image_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a string input field."""
-        return cls.file_field(name=name, widget="image", **kwargs)
+        widget = kwargs.pop("widget", "image")
+        return cls.file_field(name=name, widget=widget, **kwargs)
 
     @classmethod
     def json_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
@@ -122,21 +127,26 @@ class FieldFactory:  # pylint: disable=R0904
     @classmethod
     def radio_field(cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]) -> FpField:
         """Create a radio field."""
+        widget = kwargs.pop("widget", "radio")
         return cls.choice_field(
             name=name,
-            widget="radio",
+            widget=widget,
             **kwargs,
         )
 
     @classmethod
     def autocomplete_field(
-        cls, name: str, **kwargs: Unpack[_FpFieldInfoInputs]
+        cls,
+        name: str,
+        field_type: FieldType = "string",
+        **kwargs: Unpack[_FpFieldInfoInputs],
     ) -> FpField:
         """Create an autocomplete field."""
+        widget = kwargs.pop("widget", "autoComplete")
         return FpField(
             name=name,
-            field_type="string",
-            widget="autoComplete",
+            field_type=field_type,
+            widget=widget,
             **kwargs,
         )
 
