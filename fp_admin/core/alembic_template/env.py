@@ -30,6 +30,15 @@ target_metadata = SQLModel.metadata
 # ... etc.
 
 
+def make_sync_url(async_url: str) -> str:
+    # Convert common async URLs to sync for migrations
+    return (
+        async_url.replace("+aiosqlite", "")  # sqlite+aiosqlite -> sqlite
+        .replace("+asyncpg", "+psycopg")  # postgresql+asyncpg -> postgresql+psycopg
+        .replace("+psycopg2", "+psycopg")  # normalize psycopg2 -> psycopg (SQLA 2.x)
+    )
+
+
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
@@ -42,7 +51,8 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = config.get_main_option("sqlalchemy.url")
+    async_url = config.get_main_option("sqlalchemy.url")
+    url = make_sync_url(async_url)
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -61,8 +71,12 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
+    async_url = config.get_main_option("sqlalchemy.url")
+    url = make_sync_url(async_url)
+    section = config.get_section(config.config_ini_section, {})
+    section["sqlalchemy.url"] = url
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section, {}),
+        section,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
@@ -74,6 +88,7 @@ def run_migrations_online() -> None:
             context.run_migrations()
 
 
+print("nnnnnnnnn", context)
 if context.is_offline_mode():
     run_migrations_offline()
 else:

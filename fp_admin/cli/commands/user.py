@@ -5,17 +5,17 @@ User management commands for fp-admin CLI.
 from getpass import getpass
 
 import typer
-from fastapi import Depends
 from sqlmodel import select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
-from fp_admin.core import get_session
+from fp_admin.apps.auth.schemas import SignupRequestData
+from fp_admin.apps.auth.services import pwd_context
+from fp_admin.core import db_manager
 
 user_app = typer.Typer(name="user", help="User management commands")
 
 
 @user_app.command()
-async def createsuperuser(session: AsyncSession = Depends(get_session)) -> None:
+async def createsuperuser() -> None:
     """Create a superuser account.
 
     Examples:
@@ -37,25 +37,28 @@ async def createsuperuser(session: AsyncSession = Depends(get_session)) -> None:
     email = typer.prompt("Email")
     password = getpass("Password: ")
     confirm = getpass("Confirm Password: ")
-    # password = bcrypt.hash(password)
-
     if password != confirm:
         typer.echo("❌ Passwords do not match.")
         raise typer.Exit(code=1)
 
-    stmt = select(User).where(User.username == username)
-    exists = await session.exec(stmt)
-    if exists.first():
-        typer.echo("❌ A user with that username already exists.")
-        raise typer.Exit(code=1)
+    hashed_password = pwd_context.hash(password)
 
-    user = User(
-        username=username,
-        email=email,
-        password=password,  # You should hash this in production
-        is_active=True,
-        is_superuser=True,
-    )
-    session.add(user)
-    await session.commit()
-    typer.echo("✅ Superuser created successfully.")
+    async with db_manager.get_session() as session:
+        stmt = select(User).where(User.username == username)
+        exists = await session.exec(stmt)
+        if exists.first():
+            typer.echo("❌ A user with that username already exists.")
+            raise typer.Exit(code=1)
+        SignupRequestData(
+            username=username, email=email, password=password
+        ).model_dump()
+        user = User(
+            username=username,
+            email=email,
+            password=hashed_password,
+            is_active=True,
+            is_superuser=True,
+        )
+        session.add(user)
+        await session.commit()
+        typer.echo("✅ Superuser created successfully.")

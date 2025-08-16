@@ -2,6 +2,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import HTTPException
 from passlib.context import CryptContext
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from fp_admin.providers.exceptions import AuthError
@@ -17,7 +18,7 @@ from .schemas import (
     UserResponse,
 )
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 class UserService:
@@ -26,6 +27,10 @@ class UserService:
         self.session = session
 
     async def create_user(self, data: SignupRequestData) -> SignupResponse:
+        stmt = select(User).where(User.username == data.username)
+        exists = await self.session.exec(stmt)
+        if exists.first():
+            raise ValueError("User already exists")
         data.password = pwd_context.hash(data.password)
         params = CreateRecordParams(data=data.model_dump(), form_id="UserForm")
         user_dict: Dict[str, Any] = await self.create_service.create_record(

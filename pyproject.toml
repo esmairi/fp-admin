@@ -27,6 +27,7 @@ dependencies = [
     "uvicorn",
     "pyjwt>=2.10.1",
     "aiosqlite>=0.21.0",
+    "argon2-cffi>=25.1.0",
 ]
 [project.scripts]
 fp-admin = "fp_admin.cli:admin_cli"
