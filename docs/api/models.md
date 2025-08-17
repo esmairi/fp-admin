@@ -1,326 +1,237 @@
 # Models API
 
-This guide covers the REST API endpoints for model CRUD operations in fp-admin.
+The Models API provides comprehensive CRUD operations for all registered models in fp-admin. This API is automatically generated based on your model configurations and provides consistent endpoints for data manipulation.
 
 ## Overview
 
-fp-admin automatically generates REST API endpoints for all registered models. These endpoints provide full CRUD (Create, Read, Update, Delete) operations with filtering, pagination, and field selection.
+The Models API is built on top of the services layer and provides:
+
+- **Automatic CRUD endpoints** for all registered models
+- **Form-based validation** using view configurations
+- **Advanced filtering and pagination**
+- **Relationship handling** for foreign keys and many-to-many fields
+- **Comprehensive error handling** with detailed validation messages
 
 ## Base URL
 
-All API endpoints are prefixed with `/api/v1/models/`:
+```
+/api/v1/models/{model_name}
+```
 
-```
-https://your-domain.com/api/v1/models/{model_name}/
-```
+Where `{model_name}` is the lowercase name of your model (e.g., `user`, `post`, `category`).
 
 ## Authentication
 
-All API endpoints require authentication. Include the JWT token in the Authorization header:
+All endpoints require authentication. Include your JWT token in the Authorization header:
 
-```bash
-Authorization: Bearer <your-jwt-token>
+```http
+Authorization: Bearer <your_access_token>
 ```
 
 ## Endpoints
 
-### List Records
+### Create Record
 
-**GET** `/api/v1/models/{model_name}/`
+**POST** `/api/v1/models/{model_name}`
 
-Retrieve a list of records with optional filtering, pagination, and field selection.
+Creates a new record for the specified model.
 
-#### Parameters
-
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `page` | integer | Page number (default: 1) | `?page=2` |
-| `page_size` | integer | Records per page (default: 20, max: 100) | `?page_size=50` |
-| `search` | string | Search across searchable fields | `?search=john` |
-| `ordering` | string | Sort by field (prefix with `-` for descending) | `?ordering=-created_at` |
-| `fields` | string | Comma-separated list of fields to include | `?fields=id,name,email` |
-| `exclude` | string | Comma-separated list of fields to exclude | `?exclude=password,secret` |
-
-#### Query Parameters
-
-**Filtering:**
-```bash
-# Filter by exact match
-?field=value
-
-# Filter by multiple values
-?field__in=value1,value2,value3
-
-# Filter by range
-?field__gte=value&field__lte=value
-
-# Filter by contains
-?field__contains=value
-
-# Filter by starts with
-?field__startswith=value
-
-# Filter by ends with
-?field__endswith=value
-
-# Filter by null/not null
-?field__isnull=true
-?field__isnull=false
-```
-
-**Search:**
-```bash
-# Search across multiple fields
-?search=john
-
-# Search in specific field
-?name__icontains=john
-?email__icontains=john
-```
-
-**Ordering:**
-```bash
-# Single field ordering
-?ordering=name
-
-# Descending order
-?ordering=-created_at
-
-# Multiple field ordering
-?ordering=category,name
-```
-
-#### Example Requests
-
-```bash
-# Get all users
-GET /api/v1/models/user/
-
-# Get users with pagination
-GET /api/v1/models/user/?page=1&page_size=20
-
-# Search for users
-GET /api/v1/models/user/?search=john
-
-# Filter active users
-GET /api/v1/models/user/?is_active=true
-
-# Order by creation date
-GET /api/v1/models/user/?ordering=-created_at
-
-# Select specific fields
-GET /api/v1/models/user/?fields=id,username,email,created_at
-
-# Complex filtering
-GET /api/v1/models/user/?is_active=true&created_at__gte=2023-01-01&ordering=-created_at
-```
-
-#### Response Format
+#### Request Body
 
 ```json
 {
-  "count": 100,
-  "next": "https://api.example.com/api/v1/models/user/?page=2",
-  "previous": null,
-  "results": [
+  "data": {
+    "username": "john_doe",
+    "email": "john@example.com",
+    "password": "SecurePass123!",
+    "is_active": true
+  },
+  "form_id": "UserForm"
+}
+```
+
+#### Parameters
+
+- `data` (object): The record data to create
+- `form_id` (string, optional): Form configuration to use for validation
+
+#### Response
+
+```json
+{
+  "data": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "is_active": true,
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+#### Example
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/models/user" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": {
+      "username": "john_doe",
+      "email": "john@example.com",
+      "password": "SecurePass123!"
+    },
+    "form_id": "UserForm"
+  }'
+```
+
+### List Records
+
+**GET** `/api/v1/models/{model_name}`
+
+Retrieves a paginated list of records for the specified model.
+
+#### Query Parameters
+
+- `page` (integer, default: 1): Page number
+- `page_size` (integer, default: 20, max: 100): Number of records per page
+- `fields` (string, optional): Comma-separated list of fields to include
+- `filters` (string, optional): Filter criteria
+- `sort_by` (string, optional): Field to sort by
+- `sort_order` (string, optional): Sort order (asc/desc)
+
+#### Response
+
+```json
+{
+  "data": [
     {
       "id": 1,
       "username": "john_doe",
       "email": "john@example.com",
       "is_active": true,
-      "created_at": "2023-01-01T00:00:00Z",
-      "updated_at": "2023-01-01T00:00:00Z"
+      "created_at": "2024-01-15T10:30:00Z"
     },
     {
       "id": 2,
       "username": "jane_smith",
       "email": "jane@example.com",
       "is_active": true,
-      "created_at": "2023-01-02T00:00:00Z",
-      "updated_at": "2023-01-02T00:00:00Z"
+      "created_at": "2024-01-15T11:00:00Z"
     }
-  ]
+  ],
+  "total": 2,
+  "page": 1,
+  "page_size": 20,
+  "total_pages": 1,
+  "has_next": false,
+  "has_prev": false
 }
 ```
 
-### Create Record
-
-**POST** `/api/v1/models/{model_name}/`
-
-Create a new record.
-
-#### Request Body
-
-The request body should contain the field values for the new record:
-
-```json
-{
-  "username": "new_user",
-  "email": "newuser@example.com",
-  "password": "secure_password",
-  "is_active": true
-}
-```
-
-#### Example Request
+#### Example
 
 ```bash
-curl -X POST /api/v1/models/user/ \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "new_user",
-    "email": "newuser@example.com",
-    "password": "secure_password",
-    "is_active": true
-  }'
+curl "http://localhost:8000/api/v1/models/user?page=1&page_size=10&fields=id,username,email" \
+  -H "Authorization: Bearer <token>"
 ```
 
-#### Response Format
+### Get Record by ID
+
+**GET** `/api/v1/models/{model_name}/{record_id}`
+
+Retrieves a single record by its ID.
+
+#### Path Parameters
+
+- `record_id` (integer): The ID of the record to retrieve
+
+#### Response
 
 ```json
 {
-  "id": 3,
-  "username": "new_user",
-  "email": "newuser@example.com",
-  "is_active": true,
-  "created_at": "2023-01-03T00:00:00Z",
-  "updated_at": "2023-01-03T00:00:00Z"
+  "data": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john@example.com",
+    "is_active": true,
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  }
 }
 ```
 
-### Get Record
-
-**GET** `/api/v1/models/{model_name}/{id}/`
-
-Retrieve a specific record by ID.
-
-#### Parameters
-
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `fields` | string | Comma-separated list of fields to include | `?fields=id,name,email` |
-| `exclude` | string | Comma-separated list of fields to exclude | `?exclude=password,secret` |
-
-#### Example Request
+#### Example
 
 ```bash
-# Get user by ID
-GET /api/v1/models/user/1/
-
-# Get user with specific fields
-GET /api/v1/models/user/1/?fields=id,username,email
-```
-
-#### Response Format
-
-```json
-{
-  "id": 1,
-  "username": "john_doe",
-  "email": "john@example.com",
-  "is_active": true,
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
+curl "http://localhost:8000/api/v1/models/user/1" \
+  -H "Authorization: Bearer <token>"
 ```
 
 ### Update Record
 
-**PUT** `/api/v1/models/{model_name}/{id}/`
+**PUT** `/api/v1/models/{model_name}/{record_id}`
 
-Update an existing record (full update - all fields required).
+Updates an existing record.
 
-#### Request Body
+#### Path Parameters
 
-```json
-{
-  "username": "updated_user",
-  "email": "updated@example.com",
-  "is_active": false
-}
-```
-
-#### Example Request
-
-```bash
-curl -X PUT /api/v1/models/user/1/ \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "username": "updated_user",
-    "email": "updated@example.com",
-    "is_active": false
-  }'
-```
-
-#### Response Format
-
-```json
-{
-  "id": 1,
-  "username": "updated_user",
-  "email": "updated@example.com",
-  "is_active": false,
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-03T00:00:00Z"
-}
-```
-
-### Partial Update Record
-
-**PATCH** `/api/v1/models/{model_name}/{id}/`
-
-Partially update an existing record (only specified fields).
+- `record_id` (integer): The ID of the record to update
 
 #### Request Body
 
 ```json
 {
-  "email": "newemail@example.com",
-  "is_active": false
+  "data": {
+    "email": "john.doe@example.com",
+    "is_active": false
+  },
+  "form_id": "UserForm"
 }
 ```
 
-#### Example Request
-
-```bash
-curl -X PATCH /api/v1/models/user/1/ \
-  -H "Authorization: Bearer <token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "newemail@example.com",
-    "is_active": false
-  }'
-```
-
-#### Response Format
+#### Response
 
 ```json
 {
-  "id": 1,
-  "username": "john_doe",
-  "email": "newemail@example.com",
-  "is_active": false,
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-03T00:00:00Z"
+  "data": {
+    "id": 1,
+    "username": "john_doe",
+    "email": "john.doe@example.com",
+    "is_active": false,
+    "created_at": "2024-01-15T10:30:00Z",
+    "updated_at": "2024-01-15T12:00:00Z"
+  }
 }
+```
+
+#### Example
+
+```bash
+curl -X PUT "http://localhost:8000/api/v1/models/user/1" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "data": {
+      "email": "john.doe@example.com",
+      "is_active": false
+    },
+    "form_id": "UserForm"
+  }'
 ```
 
 ### Delete Record
 
-**DELETE** `/api/v1/models/{model_name}/{id}/`
+**DELETE** `/api/v1/models/{model_name}/{record_id}`
 
-Delete a specific record.
+Deletes a record.
 
-#### Example Request
+#### Path Parameters
 
-```bash
-curl -X DELETE /api/v1/models/user/1/ \
-  -H "Authorization: Bearer <token>"
-```
+- `record_id` (integer): The ID of the record to delete
 
-#### Response Format
+#### Response
 
 ```json
 {
@@ -328,330 +239,440 @@ curl -X DELETE /api/v1/models/user/1/ \
 }
 ```
 
-## Field Types and Validation
+#### Example
 
-### String Fields
-
-```json
-{
-  "username": "john_doe",
-  "email": "john@example.com",
-  "first_name": "John",
-  "last_name": "Doe"
-}
+```bash
+curl -X DELETE "http://localhost:8000/api/v1/models/user/1" \
+  -H "Authorization: Bearer <token>"
 ```
 
-**Validation:**
-- Required fields must be provided
-- String length limits are enforced
-- Email format validation for email fields
-- Unique constraints are enforced
+## Advanced Features
 
-### Number Fields
+### Filtering
 
-```json
-{
-  "age": 25,
-  "price": 99.99,
-  "rating": 4.5
-}
+The API supports advanced filtering using a simple syntax:
+
+```bash
+# Basic equality
+?filters=is_active=true
+
+# Multiple filters
+?filters=is_active=true&filters=username__icontains=john
+
+# Complex filters
+?filters=created_at__gte=2024-01-01&filters=email__endswith=@gmail.com
 ```
 
-**Validation:**
-- Min/max value constraints
-- Integer vs float validation
-- Range validation
+#### Filter Operators
 
-### Boolean Fields
+- `=` : Exact match
+- `__icontains` : Contains (case-insensitive)
+- `__startswith` : Starts with
+- `__endswith` : Ends with
+- `__gt` : Greater than
+- `__gte` : Greater than or equal
+- `__lt` : Less than
+- `__lte` : Less than or equal
+- `__in` : In list (comma-separated)
 
-```json
-{
-  "is_active": true,
-  "is_verified": false,
-  "is_superuser": false
-}
+### Field Selection
+
+Choose which fields to include in responses:
+
+```bash
+# Select specific fields
+?fields=id,username,email
+
+# Include relationship fields
+?fields=id,username,groups&include=groups__name
 ```
 
-### Date/Time Fields
+### Sorting
 
-```json
-{
-  "birth_date": "1990-01-01",
-  "created_at": "2023-01-01T00:00:00Z",
-  "updated_at": "2023-01-01T00:00:00Z"
-}
-```
+Sort results by any field:
 
-### Foreign Key Fields
+```bash
+# Sort by field
+?sort_by=username&sort_order=asc
 
-```json
-{
-  "author_id": 1,
-  "category_id": 2,
-  "parent_id": null
-}
-```
-
-### Many-to-Many Fields
-
-```json
-{
-  "tags": [1, 2, 3],
-  "permissions": [1, 2, 3, 4]
-}
+# Sort by multiple fields
+?sort_by=created_at,username&sort_order=desc,asc
 ```
 
 ## Error Handling
 
 ### Validation Errors
 
-When validation fails, the API returns a 400 status code with detailed error messages:
+When form validation fails, the API returns detailed error messages:
 
 ```json
 {
-  "detail": "Validation failed",
-  "errors": {
-    "username": [
-      "This field is required."
-    ],
-    "email": [
-      "Enter a valid email address."
-    ],
-    "age": [
-      "Ensure this value is greater than or equal to 0."
-    ]
-  }
+  "error": "Validation failed",
+  "status_code": 422,
+  "details": {
+    "username": ["Username is required"],
+    "email": ["Invalid email format"],
+    "password": ["Password must be at least 8 characters"]
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
 }
 ```
 
-### Not Found Errors
+### Common Error Responses
 
-When a record is not found:
+#### 400 Bad Request
 
 ```json
 {
-  "detail": "Record not found"
+  "error": "Invalid request data",
+  "status_code": 400,
+  "details": "Missing required field: username"
 }
 ```
 
-### Permission Errors
-
-When the user doesn't have permission:
+#### 401 Unauthorized
 
 ```json
 {
-  "detail": "You do not have permission to perform this action."
+  "error": "Authentication required",
+  "status_code": 401,
+  "details": "Valid token required"
 }
 ```
 
-### Authentication Errors
-
-When authentication fails:
+#### 403 Forbidden
 
 ```json
 {
-  "detail": "Authentication credentials were not provided."
+  "error": "Insufficient permissions",
+  "status_code": 403,
+  "details": "User does not have permission to access this resource"
 }
+```
+
+#### 404 Not Found
+
+```json
+{
+  "error": "Record not found",
+  "status_code": 404,
+  "details": "User with ID 999 does not exist"
+}
+```
+
+#### 500 Internal Server Error
+
+```json
+{
+  "error": "Internal server error",
+  "status_code": 500,
+  "details": "Database connection failed"
+}
+```
+
+## Rate Limiting
+
+The API includes rate limiting to prevent abuse:
+
+- **Default**: 100 requests per minute per user
+- **Authentication endpoints**: 5 requests per minute per IP
+- **File uploads**: 10 requests per minute per user
+
+Rate limit headers are included in responses:
+
+```http
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 95
+X-RateLimit-Reset: 1642233600
 ```
 
 ## Pagination
 
-The API uses cursor-based pagination with the following response format:
+All list endpoints support pagination with the following response structure:
 
 ```json
 {
-  "count": 100,
-  "next": "https://api.example.com/api/v1/models/user/?cursor=abc123",
-  "previous": null,
-  "results": [...]
+  "data": [...],
+  "total": 150,
+  "page": 2,
+  "page_size": 20,
+  "total_pages": 8,
+  "has_next": true,
+  "has_prev": true
 }
 ```
 
 ### Pagination Parameters
 
-- `page`: Page number (default: 1)
-- `page_size`: Records per page (default: 20, max: 100)
+- `page`: Current page number (1-based)
+- `page_size`: Number of items per page (1-100)
+- `total`: Total number of items
+- `total_pages`: Total number of pages
+- `has_next`: Whether there's a next page
+- `has_prev`: Whether there's a previous page
 
-## Filtering
+## Relationship Handling
 
-### Exact Match
+### Foreign Key Relationships
 
-```bash
-GET /api/v1/models/user/?is_active=true
-GET /api/v1/models/user/?username=john_doe
+The API automatically handles foreign key relationships:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "My First Post",
+    "author_id": 5,
+    "author": {
+      "id": 5,
+      "username": "john_doe",
+      "email": "john@example.com"
+    }
+  }
+}
 ```
 
-### Contains
+### Many-to-Many Relationships
 
-```bash
-GET /api/v1/models/user/?username__contains=john
-GET /api/v1/models/user/?email__contains=example
+Many-to-many relationships are also supported:
+
+```json
+{
+  "data": {
+    "id": 1,
+    "title": "My First Post",
+    "tags": [
+      {"id": 1, "name": "python"},
+      {"id": 2, "name": "fastapi"}
+    ]
+  }
+}
 ```
 
-### Starts/Ends With
+## Bulk Operations
 
-```bash
-GET /api/v1/models/user/?username__startswith=john
-GET /api/v1/models/user/?email__endswith=@example.com
+### Bulk Create
+
+**POST** `/api/v1/models/{model_name}/bulk`
+
+Creates multiple records at once:
+
+```json
+{
+  "records": [
+    {
+      "username": "user1",
+      "email": "user1@example.com"
+    },
+    {
+      "username": "user2",
+      "email": "user2@example.com"
+    }
+  ],
+  "form_id": "UserForm"
+}
 ```
 
-### Greater/Less Than
+### Bulk Update
 
-```bash
-GET /api/v1/models/user/?created_at__gte=2023-01-01
-GET /api/v1/models/user/?age__lte=30
+**PUT** `/api/v1/models/{model_name}/bulk`
+
+Updates multiple records:
+
+```json
+{
+  "updates": [
+    {"id": 1, "data": {"is_active": false}},
+    {"id": 2, "data": {"is_active": true}}
+  ],
+  "form_id": "UserForm"
+}
 ```
 
-### In List
+### Bulk Delete
 
-```bash
-GET /api/v1/models/user/?id__in=1,2,3,4,5
-GET /api/v1/models/user/?status__in=active,inactive
-```
+**DELETE** `/api/v1/models/{model_name}/bulk`
 
-### Null/Not Null
+Deletes multiple records:
 
-```bash
-GET /api/v1/models/user/?deleted_at__isnull=true
-GET /api/v1/models/user/?email__isnull=false
+```json
+{
+  "ids": [1, 2, 3]
+}
 ```
 
 ## Search
 
-### Global Search
+### Full-Text Search
 
-Search across all searchable fields:
+**GET** `/api/v1/models/{model_name}/search?q={query}`
+
+Performs full-text search across searchable fields:
 
 ```bash
-GET /api/v1/models/user/?search=john
+curl "http://localhost:8000/api/v1/models/user/search?q=john" \
+  -H "Authorization: Bearer <token>"
 ```
 
-### Field-Specific Search
+### Search Parameters
+
+- `q` (string): Search query
+- `fields` (string, optional): Fields to search in
+- `fuzzy` (boolean, optional): Enable fuzzy matching
+
+## Export
+
+### Export to CSV
+
+**GET** `/api/v1/models/{model_name}/export?format=csv`
+
+Exports data in CSV format:
 
 ```bash
-GET /api/v1/models/user/?username__icontains=john
-GET /api/v1/models/user/?email__icontains=example
+curl "http://localhost:8000/api/v1/models/user/export?format=csv" \
+  -H "Authorization: Bearer <token>" \
+  -o users.csv
 ```
 
-## Ordering
+### Export to JSON
 
-### Single Field
+**GET** `/api/v1/models/{model_name}/export?format=json`
+
+Exports data in JSON format:
 
 ```bash
-GET /api/v1/models/user/?ordering=username
-GET /api/v1/models/user/?ordering=-created_at
+curl "http://localhost:8000/api/v1/models/user/export?format=json" \
+  -H "Authorization: Bearer <token>" \
+  -o users.json
 ```
 
-### Multiple Fields
+## Webhooks
 
-```bash
-GET /api/v1/models/user/?ordering=is_active,-created_at,username
-```
+### Webhook Configuration
 
-## Field Selection
+Configure webhooks for model events:
 
-### Include Specific Fields
-
-```bash
-GET /api/v1/models/user/?fields=id,username,email
-```
-
-### Exclude Specific Fields
-
-```bash
-GET /api/v1/models/user/?exclude=password,secret_key
-```
-
-## Examples
-
-### User Management
-
-```bash
-# List all users
-GET /api/v1/models/user/
-
-# Create new user
-POST /api/v1/models/user/
+```json
 {
-  "username": "newuser",
-  "email": "newuser@example.com",
-  "password": "secure123",
-  "is_active": true
+  "webhooks": [
+    {
+      "url": "https://your-app.com/webhooks/user-created",
+      "events": ["create", "update", "delete"],
+      "secret": "webhook-secret"
+    }
+  ]
 }
-
-# Get specific user
-GET /api/v1/models/user/1/
-
-# Update user
-PUT /api/v1/models/user/1/
-{
-  "username": "updateduser",
-  "email": "updated@example.com",
-  "is_active": false
-}
-
-# Delete user
-DELETE /api/v1/models/user/1/
 ```
 
-### Blog Posts
+### Webhook Events
+
+- `create`: Record created
+- `update`: Record updated
+- `delete`: Record deleted
+
+### Webhook Payload
+
+```json
+{
+  "event": "create",
+  "model": "user",
+  "data": {
+    "id": 1,
+    "username": "john_doe"
+  },
+  "timestamp": "2024-01-15T10:30:00Z",
+  "signature": "sha256=..."
+}
+```
+
+## Testing
+
+### Test Endpoints
+
+Use the test endpoints for development and testing:
 
 ```bash
-# List posts with filtering
-GET /api/v1/models/post/?is_published=true&ordering=-created_at
+# Test endpoint (no authentication required)
+curl "http://localhost:8000/api/v1/models/user/test"
 
-# Create new post
-POST /api/v1/models/post/
-{
-  "title": "My First Post",
-  "content": "This is the content of my first post.",
-  "author_id": 1,
-  "category_id": 2,
-  "tags": [1, 2, 3],
-  "is_published": true
-}
-
-# Get post with related data
-GET /api/v1/models/post/1/?fields=id,title,content,author,created_at
+# Test with sample data
+curl "http://localhost:8000/api/v1/models/user/test?sample=true"
 ```
 
-### Complex Queries
+### Mock Data
+
+Generate mock data for testing:
 
 ```bash
-# Advanced filtering and search
-GET /api/v1/models/post/?search=python&is_published=true&created_at__gte=2023-01-01&ordering=-created_at&page=1&page_size=10
-
-# Multiple field selection
-GET /api/v1/models/user/?fields=id,username,email,created_at&exclude=password,secret_key
+# Generate 10 mock users
+curl "http://localhost:8000/api/v1/models/user/mock?count=10" \
+  -H "Authorization: Bearer <token>"
 ```
 
-## Rate Limiting
+## Best Practices
 
-The API implements rate limiting to prevent abuse:
+### 1. Use Form Validation
 
-- **Anonymous users**: 100 requests per hour
-- **Authenticated users**: 1000 requests per hour
-- **Premium users**: 10000 requests per hour
+Always specify a `form_id` for proper validation:
 
-Rate limit headers are included in responses:
-
-```
-X-RateLimit-Limit: 1000
-X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1640995200
+```json
+{
+  "data": {...},
+  "form_id": "UserForm"
+}
 ```
 
-## Caching
+### 2. Handle Errors Gracefully
 
-The API supports caching with ETags and Last-Modified headers:
+Implement proper error handling in your client:
 
+```python
+try:
+    response = await api.create_user(user_data)
+    return response["data"]
+except ValidationError as e:
+    # Handle validation errors
+    for field, errors in e.details.items():
+        print(f"{field}: {errors}")
+except APIError as e:
+    # Handle other API errors
+    print(f"API Error: {e.message}")
 ```
-ETag: "abc123"
-Last-Modified: Wed, 01 Jan 2023 00:00:00 GMT
+
+### 3. Use Pagination
+
+Always implement pagination for large datasets:
+
+```python
+page = 1
+all_users = []
+
+while True:
+    response = await api.get_users(page=page, page_size=100)
+    users = response["data"]
+    all_users.extend(users)
+
+    if not response["has_next"]:
+        break
+
+    page += 1
+```
+
+### 4. Optimize Field Selection
+
+Only request the fields you need:
+
+```python
+# Instead of getting all fields
+users = await api.get_users()
+
+# Request only needed fields
+users = await api.get_users(fields="id,username,email")
 ```
 
 ## Next Steps
 
 - **[Views API](views.md)** - Admin view configuration API
 - **[Apps API](apps.md)** - Application management API
-- **[Authentication](../user-guide/authentication.md)** - User management and authentication
+- **[Services Layer](../user-guide/services.md)** - Business logic services
+- **[Authentication](../user-guide/authentication.md)** - User authentication

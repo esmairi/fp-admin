@@ -67,8 +67,6 @@ plugins:
   - search
   - git-revision-date-localized:
       enable_creation_date: true
-  - minify:
-      minify_html: true
 
 # Extensions
 markdown_extensions:
@@ -86,8 +84,7 @@ markdown_extensions:
       smart_enable: all
   - pymdownx.caret
   - pymdownx.details
-  - pymdownx.emoji:
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.emoji
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -127,10 +124,14 @@ nav:
     - Installation: getting-started/installation.md
     - Quick Start: getting-started/quick-start.md
     - Core Concepts: getting-started/core-concepts.md
+  - Configuration:
+    - Settings: configuration/settings.md
   - User Guide:
     - Field Types: user-guide/field-types.md
     - Widgets: user-guide/widgets.md
     - Admin Models: user-guide/admin-models.md
+    - Services Layer: user-guide/services.md
+    - Providers: user-guide/providers.md
     - Authentication: user-guide/authentication.md
     - CLI Commands: user-guide/cli-commands.md
   - API Reference:

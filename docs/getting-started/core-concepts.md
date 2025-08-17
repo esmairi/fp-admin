@@ -12,6 +12,8 @@ fp-admin is built around several core concepts that work together to provide a p
 - **Fields**: Form field definitions and widgets
 - **Apps**: Modular application organization
 - **Services**: Business logic and CRUD operations
+- **Providers**: Authentication and external service integrations
+- **Module Loader**: Automatic discovery and loading of application components
 
 ## Models
 
@@ -43,20 +45,23 @@ class User(SQLModel, table=True):
 Admin registration is the simple process of registering your models with the admin interface:
 
 ```python
-from fp_admin.admin.models import AdminModel
+from fp_admin.registry import AdminModel
 from .models import User, Post, Category
 
 class UserAdmin(AdminModel):
     model = User
     label = "Users"
+    display_field = "username"  # Field to display in lists
 
 class PostAdmin(AdminModel):
     model = Post
     label = "Posts"
+    display_field = "title"
 
 class CategoryAdmin(AdminModel):
     model = Category
     label = "Categories"
+    display_field = "name"
 ```
 
 ### Admin Registration Features
@@ -65,293 +70,194 @@ class CategoryAdmin(AdminModel):
 - **Automatic Discovery**: Models are automatically discovered by the admin interface
 - **Clean Separation**: Keeps model registration separate from view configuration
 - **Minimal Code**: Requires only the essential information
+- **Display Fields**: Configure which field to show in list views
+
+## Services Layer
+
+The services layer provides business logic and CRUD operations for your models:
+
+```python
+from fp_admin.services.v1 import CreateService, ListService, ReadService, UpdateService
+
+# Create service for User model
+create_service = CreateService(User, "user")
+
+# List service for paginated results
+list_service = ListService(User, "user")
+
+# Read service for single record operations
+read_service = ReadService(User, "user")
+
+# Update service for record modifications
+update_service = UpdateService(User, "user")
+```
+
+### Service Features
+
+- **CRUD Operations**: Complete create, read, update, delete functionality
+- **Pagination**: Built-in pagination support
+- **Filtering**: Advanced filtering and querying capabilities
+- **Validation**: Form-based validation with custom error handling
+- **Relationship Handling**: Automatic relationship field loading
+- **Async Support**: Full async/await support for database operations
+
+## Authentication & Providers
+
+fp-admin includes a flexible authentication system with multiple provider support:
+
+```python
+from fp_admin.providers import InternalProvider
+from fp_admin.providers.exceptions import AuthError
+
+# Internal authentication provider
+provider = InternalProvider(
+    secret_key="your-secret-key",
+    access_token_expires_minutes=30,
+    refresh_token_expires_minutes=90,
+    user_auth_func=your_auth_function
+)
+
+# Authenticate user and issue tokens
+token_data = await provider.authenticate_and_issue_token(username, password)
+```
+
+### Authentication Features
+
+- **JWT Tokens**: Secure access and refresh token system
+- **Multiple Providers**: Support for internal and OAuth providers
+- **Token Refresh**: Automatic token refresh mechanism
+- **Secure Storage**: Argon2 password hashing
+- **Session Management**: Flexible session handling
+
+## Module Loading
+
+The module loader automatically discovers and loads your application components:
+
+```python
+# Automatic loading order
+module_order = ["models", "admin", "views", "apps"]
+
+# Apps are loaded from INSTALLED_APPS setting
+INSTALLED_APPS = [
+    "fp_admin.apps.auth",
+    "your_app.blog",
+    "your_app.users"
+]
+```
+
+### Module Loading Features
+
+- **Automatic Discovery**: No manual imports required
+- **Ordered Loading**: Ensures dependencies are loaded correctly
+- **Router Registration**: Automatic API router registration
+- **Error Handling**: Graceful handling of missing modules
+- **Hot Reloading**: Support for development-time module reloading
 
 ## Views
 
 Views define the detailed configuration of how your models appear in the admin interface:
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.registry import ViewBuilder
+from fp_admin.models.field import FieldFactory
 from .models import User # your models.py
 
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.primary_key_field("id"),
         FieldFactory.string_field(
             "username",
-            "Username",
             required=True,
         ),
+        FieldFactory.email_field("email", required=True),
+        FieldFactory.boolean_field("is_active"),
         ...
     ]
     creation_fields = ["username", "email", "is_active"]
     allowed_update_fields = ["email", "is_active"]
-
-
-
 ```
 
 ### View Features
 
-- **fields**: Configure which fields appear in the list view
-- **creation_fields**: Define creation fields
-- **allowed_update_fields**: Specify updated fields
-
-## Fields
-
-Fields define the form inputs and their behavior:
-
-```python
-from fp_admin.admin.fields import FieldView
-
-# Basic text field
-FieldView.text_field("name", "Name", required=True)
-
-# Email field with validation
-FieldView.email_field("email", "Email Address")
-
-# Foreign key relationship
-FieldView.foreign_key_field("category_id", "Category", model=Category)
-
-# Multi-choice field
-FieldView.multi_choice_field("tags", "Tags", choices=tag_choices)
-```
-
-### Field Types
-
-- **string**: Text input (default)
-- **number**: Numeric input
-- **boolean**: True/false toggle
-- **date**: Date picker
-- **datetime**: Date and time picker
-- **choice**: Single selection
-- **multichoice**: Multiple selections
-- **foreignkey**: Related model selection
-- **many_to_many**: Many-to-many relationships
-- **file**: File upload
-- **image**: Image upload
-- **json**: JSON editor
-
-### Widgets
-
-Each field type supports different widgets:
-
-- **text**: Single-line text input
-- **textarea**: Multi-line text input
-- **password**: Password input
-- **dropdown**: Select dropdown
-- **radio**: Radio buttons
-- **checkbox**: Checkbox
-- **switch**: Toggle switch
-- **slider**: Numeric slider
-- **calendar**: Date/time picker
-- **upload**: File upload
-- **image**: Image upload with preview
-- **editor**: Code/JSON editor
-- **colorPicker**: Color picker
+- **Field Configuration**: Detailed control over form fields
+- **Validation Rules**: Custom validation and error messages
+- **Permission Control**: Field-level access control
+- **Widget Selection**: Choose appropriate input widgets
+- **Relationship Display**: Handle foreign key and many-to-many fields
 
 ## Apps
 
-Apps are modular components that organize your code:
+Apps are modular components that group related functionality:
 
 ```python
 # apps/blog/apps.py
-from fp_admin.admin.apps import AppConfig
+from fp_admin.registry import AppConfig
 
-class BlogConfig(AppConfig):
+class BlogApp(AppConfig):
     name = "blog"
-    verbose_name = "my blog"
-```
-
-### App Structure
-
-```
-apps/
-├── blog/
-│   ├── __init__.py
-│   ├── admin.py          # Simple model registration
-│   ├── apps.py           # App configuration
-│   ├── models.py         # SQLModel definitions
-│   ├── routers.py        # API routes
-│   └── views.py          # Detailed admin configuration
+    label = "Blog"
+    description = "Blog management application"
+    icon = "mdi-post"
+    order = 1
 ```
 
 ### App Features
 
-- **Modular Design**: Each app is self-contained
-- **Reusable**: Apps can be shared between projects
-- **Configurable**: Apps can be enabled/disabled
-- **Extensible**: Apps can be extended with custom functionality
+- **Modular Design**: Organize functionality into logical groups
+- **Icon Support**: Visual representation in admin interface
+- **Ordering**: Control display order in navigation
+- **Dependencies**: Manage app dependencies and requirements
+- **Configuration**: App-specific settings and options
 
-## Services
+## Registry System
 
-Services handle business logic and CRUD operations:
-
-
-### Service Features
-
-- **CRUD Operations**: Automatic create, read, update, delete
-- **Validation**: Built-in data validation
-- **Error Handling**: Comprehensive error handling
-- **Custom Logic**: Extensible with custom business logic
-- **Query Building**: Advanced query building with filters
-
-## FieldView System
-
-The FieldView system is the core of fp-admin's flexibility:
+The registry system manages all registered components:
 
 ```python
-from fp_admin.admin.fields import FieldView, FieldFactory
+from fp_admin.registry import model_registry, view_registry, apps_registry
 
-# Using FieldView directly
-field = FieldView(
-    name="title",
-    label="Title",
-    field_type="string",
-    widget="text",
-    required=True
-)
+# Get registered model configuration
+model_config = model_registry.get("user")
 
-# Using FieldFactory for convenience
-field = FieldFactory.text_field("title", "Title", required=True)
-field = FieldFactory.email_field("email", "Email")
-field = FieldFactory.switch_field("is_active", "Active")
+# Get registered view configuration
+view_config = view_registry.get("UserForm")
+
+# Get registered app configuration
+app_config = apps_registry.get("blog")
 ```
 
-### FieldView Features
+### Registry Features
 
-- **Type Safety**: Strong typing for field configurations
-- **Validation**: Built-in validation rules
-- **Widgets**: Rich widget support
-- **Relationships**: Foreign key and many-to-many support
-- **Customization**: Highly customizable appearance and behavior
+- **Central Management**: Single source of truth for all components
+- **Type Safety**: Full type hints and validation
+- **Configuration Access**: Easy access to component configurations
+- **Dynamic Registration**: Runtime component registration
+- **Validation**: Ensure component configurations are valid
 
-## Admin Interface
+## Error Handling
 
-The admin interface configs is automatically generated from your views:
-
-
-### Navigation
-
-- **Model List**: Browse all models
-- **Detail Views**: View and edit individual records
-- **Create Forms**: Add new records
-- **Search**: Find specific records
-- **Settings**: Configure admin interface
-
-## API Layer
-
-fp-admin provides a complete REST API:
-
-### Endpoints
-
-- `GET /api/v1/models/{model}/` - List records
-- `POST /api/v1/models/{model}/` - Create record
-- `GET /api/v1/models/{model}/{id}/` - Get record
-- `PUT /api/v1/models/{model}/{id}/` - Update record
-- `DELETE /api/v1/models/{model}/{id}/` - Delete record
-
-### Features
-
-- **Authentication**: JWT-based authentication # TODO
-- **Authorization**: Role-based access control # TODO
-- **Validation**: Request/response validation
-- **Error Handling**: Comprehensive error responses
-- **Documentation**: Auto-generated API documentation # TODO
-
-## Database Integration
-
-fp-admin uses SQLModel for database operations:
-
-### Features
-
-- **Multiple Databases**: Support for SQLite, PostgreSQL, MySQL
-- **Migrations**: Alembic-based migration system
-- **Relationships**: Foreign keys and many-to-many
-- **Constraints**: Database-level constraints
-
-### Migration System
-
-```bash
-# Create migration
-fp-admin make-migrations initial
-
-# Apply migrations
-fp-admin migrate
-```
-
-## Authentication & Authorization
-
-fp-admin includes a complete authentication system:
-
-### Features
-
-- **User Management**: User creation and management
-- **Role-based Access**: Control access by user roles
-- **JWT Tokens**: Secure token-based authentication
-- **Password Security**: Secure password hashing
-- **Session Management**: Session handling
-
-### User Model
+fp-admin provides comprehensive error handling and validation:
 
 ```python
-class User(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(unique=True, index=True)
-    email: str = Field(unique=True, index=True)
-    hashed_password: str
-    is_active: bool = Field(default=True)
-    is_superuser: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+from fp_admin.exceptions import ModelError, ServiceError, ValidationError
+from fp_admin.api.error_handlers import handle_validation_error
+
+try:
+    result = await service.create_record(session, params)
+except ValidationError as e:
+    raise handle_validation_error(e.details)
+except ServiceError as e:
+    # Handle service-level errors
+    pass
 ```
 
-## CLI Tools
+### Error Handling Features
 
-fp-admin provides command-line tools for development:
-
-### Commands
-
-- `fp-admin startproject` - Create new project
-- `fp-admin startapp` - Create new app
-- `fp-admin makemigrations` - Create database migrations
-- `fp-admin migrate` - Apply migrations
-- `fp-admin createsuperuser` - Create admin user
-- `fp-admin run` - Start development server
-
-## Configuration
-
-fp-admin is highly configurable through settings:
-
-```python
-# settings.py
-
-# Database
-DATABASE_URL = "sqlite:///./app.db"
-
-# Admin Settings
-ADMIN_TITLE = "My Admin"
-ADMIN_DESCRIPTION = "Admin interface"
-
-# Security
-SECRET_KEY = "your-secret-key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-# File Upload
-UPLOAD_DIR = "uploads"
-MAX_FILE_SIZE = 10 * 1024 * 1024
-```
-
-## Next Steps
-
-Now that you understand the core concepts, explore:
-
-- **[Field Types](../user-guide/field-types.md)** - Detailed field type reference
-- **[Widgets](../user-guide/widgets.md)** - Available widgets and configurations
-- **[Admin Models](../user-guide/admin-models.md)** - Advanced admin configuration
-- **[Authentication](../user-guide/authentication.md)** - User management setup
-- **[CLI Commands](../user-guide/cli-commands.md)** - Command-line tools reference
+- **Structured Errors**: Consistent error response format
+- **Validation Errors**: Detailed field-level validation errors
+- **HTTP Status Codes**: Appropriate HTTP status codes
+- **Error Logging**: Comprehensive error logging
+- **User-Friendly Messages**: Clear error messages for end users

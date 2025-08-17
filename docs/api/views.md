@@ -406,10 +406,10 @@ Views are automatically registered when they follow the fp-admin view structure:
 ### Form View Registration
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.registry import ViewBuilder
 from fp_admin.admin.fields import FieldFactory
 
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
@@ -699,13 +699,13 @@ API_VERSION = "v1"
 
 ### View Registration
 
-Views are automatically registered when they inherit from `BaseViewBuilder`:
+Views are automatically registered when they inherit from `ViewBuilder`:
 
 ```python
 # views.py
-from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.registry import ViewBuilder
 
-class CustomFormView(BaseViewBuilder):
+class CustomFormView(ViewBuilder):
     model = CustomModel
     view_type = "form"
     name = "CustomForm"

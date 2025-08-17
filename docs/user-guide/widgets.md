@@ -1,250 +1,382 @@
 # Widgets
 
-This guide covers all available widgets in fp-admin and how to configure them.
+Widgets are the UI components that render form fields in the admin interface. fp-admin provides a variety of widgets that automatically map to different field types, and you can customize widget behavior for specific use cases.
 
 ## Overview
 
-Widgets are the UI components that render form fields in the admin interface. Each field type supports specific widgets that determine how the field appears and behaves. In fp-admin, widgets are automatically selected based on the field type when using `FieldFactory`.
+Widgets are automatically selected based on the field type, but you can override them to provide custom UI components. Each widget type offers specific configuration options to enhance the user experience.
 
-## Field Factory Widgets
+## Widget Types
 
-### Text Widget
+### Text Widgets
 
-Single-line text input for short text.
-
-```python
-from fp_admin.admin.fields import FieldFactory
-
-# Basic text field
-FieldFactory.string_field("name", "Name", required=True)
-
-# With max length
-FieldFactory.string_field("title", "Title", max_length=100)
-
-# With pattern validation
-FieldFactory.string_field("phone", "Phone", pattern=r"^\+?1?\d{9,15}$")
-```
-
-**Configuration Options:**
-- `required`: Whether the field is required
-- `max_length`: Maximum character length
-- `min_length`: Minimum character length
-- `pattern`: Regex pattern for validation
-
-### Email Widget
-
-Email input with built-in validation.
+#### String Input Widget
 
 ```python
-# Basic email field
-FieldFactory.email_field("email", "Email", required=True)
+from fp_admin.models.field import FieldFactory
 
-# With custom validation
-FieldFactory.email_field("contact_email", "Contact Email", required=True)
+# Basic string input
+FieldFactory.string_field("username", required=True, placeholder="Enter username")
+
+# With custom widget
+FieldFactory.string_field("phone", widget="phone", placeholder="+1 (555) 123-4567")
 ```
 
-**Configuration Options:**
-- `required`: Whether the field is required
-
-### Password Widget
-
-Password input with hidden characters.
+#### Text Area Widget
 
 ```python
-# Basic password field
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
+# Multi-line text input
+FieldFactory.text_field("description", placeholder="Enter description", rows=5)
 
-# With strength requirements
-FieldFactory.password_field("new_password", "New Password", required=True, min_length=8)
+# With custom configuration
+FieldFactory.text_field("bio", rows=4, max_length=500, placeholder="Tell us about yourself")
 ```
 
-**Configuration Options:**
-- `required`: Whether the field is required
-- `min_length`: Minimum password length
-
-### Textarea Widget
-
-Multi-line text input for longer content.
+#### Email Widget
 
 ```python
-# Basic textarea
-FieldFactory.textarea_field("description", "Description")
-
-# With rows
-FieldFactory.textarea_field("content", "Content", rows=10)
-
-# With max length
-FieldFactory.textarea_field("notes", "Notes", rows=5, max_length=500)
+# Email input with validation
+FieldFactory.email_field("email", required=True, placeholder="Enter email address")
 ```
 
-**Configuration Options:**
-- `rows`: Number of visible rows
-- `max_length`: Maximum character length
-
-### Boolean Widget
-
-Toggle switch for true/false values.
+#### Password Widget
 
 ```python
-# Basic boolean field
-FieldFactory.boolean_field("is_active", "Active")
-
-# With default value
-FieldFactory.boolean_field("newsletter", "Newsletter", default=True)
+# Password input with hidden characters
+FieldFactory.password_field("password", required=True, min_length=8, placeholder="Enter password")
 ```
 
-**Configuration Options:**
-- `default`: Default checked state
+### Numeric Widgets
 
-### Primary Key Widget
-
-Readonly field for primary keys.
+#### Number Input Widget
 
 ```python
-# Primary key field (always readonly)
-FieldFactory.primarykey_field("id", "ID")
+# Integer input
+FieldFactory.number_field("age", required=True, placeholder="Enter age")
+
+# With range constraints
+FieldFactory.number_field("rating", min_value=1, max_value=5, step=1)
 ```
 
-**Configuration Options:**
-- Always readonly and disabled
-- No additional configuration needed
+#### Float Input Widget
+
+```python
+# Decimal number input
+FieldFactory.float_field("price", required=True, placeholder="Enter price")
+
+# With precision
+FieldFactory.float_field("score", min_value=0.0, max_value=10.0, step=0.1)
+```
+
+#### Slider Widget
+
+```python
+# Slider for number selection
+FieldFactory.slider_field("rating", min_value=1, max_value=5, step=1)
+```
+
+### Date and Time Widgets
+
+#### Date Widget
+
+```python
+# Date picker
+FieldFactory.date_field("birth_date", required=True)
+```
+
+#### Time Widget
+
+```python
+# Time picker
+FieldFactory.time_field("appointment_time", required=True)
+```
+
+#### DateTime Widget
+
+```python
+# Date and time picker
+FieldFactory.datetime_field("created_at", required=True)
+```
+
+### Boolean Widgets
+
+#### Checkbox Widget
+
+```python
+# Standard checkbox
+FieldFactory.boolean_field("is_active", required=True)
+```
+
+#### Toggle Widget
+
+```python
+# Switch/toggle widget
+FieldFactory.toggle_field("is_verified", required=True)
+```
+
+#### Radio Widget
+
+```python
+# Radio button group
+FieldFactory.radio_field("status", required=True, choices=["active", "inactive", "pending"])
+```
+
+### Choice Widgets
+
+#### Select Widget
+
+```python
+# Dropdown selection
+FieldFactory.choice_field("category", required=True, choices=["tech", "lifestyle", "news"])
+```
+
+#### Multi-Select Widget
+
+```python
+# Multiple choice selection
+FieldFactory.multichoice_field("tags", required=True, choices=["python", "fastapi", "admin"])
+```
+
+#### Chips Widget
+
+```python
+# Multiple choice with chips display
+FieldFactory.chips_field("skills", required=True, choices=["python", "javascript", "sql"])
+```
+
+#### Listbox Widget
+
+```python
+# Multiple choice with listbox display
+FieldFactory.listbox_field("permissions", required=True, choices=["read", "write", "delete"])
+```
+
+### File Widgets
+
+#### File Upload Widget
+
+```python
+# File upload
+FieldFactory.file_field("document", required=True)
+```
+
+#### Image Widget
+
+```python
+# Image upload with preview
+FieldFactory.image_field("avatar", required=True)
+```
+
+### Special Widgets
+
+#### JSON Widget
+
+```python
+# JSON editor
+FieldFactory.json_field("metadata", required=True)
+```
+
+#### Autocomplete Widget
+
+```python
+# Autocomplete input
+FieldFactory.autocomplete_field("search", required=True, placeholder="Start typing...")
+```
 
 ## Relationship Widgets
 
-### Many-to-Many Widget
-
-Multi-select for many-to-many relationships.
-
-```python
-# User groups
-FieldFactory.many_to_many_field(
-    "groups",
-    "Groups",
-    model_class=Group,
-    field_title="name"
-)
-
-# Group permissions
-FieldFactory.many_to_many_field(
-    "permissions",
-    "Permissions",
-    model_class=Permission,
-    field_title="name"
-)
-```
-
-**Configuration Options:**
-- `model_class`: The related model class
-- `field_title`: The field to display from the related model
-
 ### Foreign Key Widget
 
-Single-select dropdown for foreign key relationships.
-
 ```python
-# User's department
-FieldFactory.foreign_key_field(
-    "department_id",
-    "Department",
-    model_class=Department,
-    field_title="name"
+from .models import Category, Department
+
+# Single selection from related model
+FieldFactory.foreignkey_field(
+    "category_id",
+    model_class=Category,
+    display_field="name",
+    required=True
 )
 
-# Post's author
-FieldFactory.foreign_key_field(
-    "author_id",
-    "Author",
-    model_class=User,
-    field_title="username"
+# With custom configuration
+FieldFactory.foreignkey_field(
+    "department_id",
+    model_class=Department,
+    display_field="name",
+    required=True,
+    placeholder="Select department"
 )
 ```
 
-**Configuration Options:**
-- `model_class`: The related model class
-- `field_title`: The field to display from the related model
-
-## Widget Configuration Examples
-
-### User Form Widgets
+### Many-to-Many Widget
 
 ```python
-from fp_admin.admin.fields import FieldFactory
-from .models import User, Group
+# Multiple selection from related model
+FieldFactory.many_to_many_field(
+    "tags",
+    model_class=Tag,
+    display_field="name",
+    required=False
+)
 
-class UserFormView(BaseViewBuilder):
+# With custom widget
+FieldFactory.many_to_many_field(
+    "groups",
+    model_class=Group,
+    display_field="name",
+    required=False,
+    widget="chips"
+)
+```
+
+### One-to-One Widget
+
+```python
+# Single selection for one-to-one relationship
+FieldFactory.one_to_one_field(
+    "profile",
+    model_class=UserProfile,
+    display_field="username",
+    required=False
+)
+```
+
+## Widget Configuration
+
+### Common Widget Options
+
+All widgets support these common configuration options:
+
+```python
+FieldFactory.string_field(
+    "username",
+    required=True,           # Field is required
+    readonly=False,          # Field is read-only
+    disabled=False,          # Field is disabled
+    placeholder="Enter username",  # Placeholder text
+    help_text="Username must be unique",  # Help text
+    widget="text",           # Specific widget type
+    validators=[],           # Custom validators
+    custom_validator=None    # Custom validation function
+)
+```
+
+### Widget-Specific Options
+
+#### Text Widgets
+
+```python
+# String field with custom widget
+FieldFactory.string_field(
+    "phone",
+    widget="phone",
+    placeholder="+1 (555) 123-4567",
+    pattern=r"^\+?1?\d{9,15}$"
+)
+
+# Text area with custom configuration
+FieldFactory.text_field(
+    "description",
+    rows=5,
+    max_length=1000,
+    placeholder="Enter detailed description"
+)
+```
+
+#### Numeric Widgets
+
+```python
+# Number field with constraints
+FieldFactory.number_field(
+    "rating",
+    min_value=1,
+    max_value=5,
+    step=1,
+    placeholder="Select rating"
+)
+
+# Slider with custom range
+FieldFactory.slider_field(
+    "progress",
+    min_value=0,
+    max_value=100,
+    step=5,
+    placeholder="Set progress"
+)
+```
+
+#### Choice Widgets
+
+```python
+# Choice field with custom widget
+FieldFactory.choice_field(
+    "status",
+    widget="radio",
+    choices=["active", "inactive", "pending"],
+    required=True
+)
+
+# Multi-choice with custom widget
+FieldFactory.multichoice_field(
+    "skills",
+    widget="chips",
+    choices=["python", "javascript", "sql", "html", "css"],
+    required=False
+)
+```
+
+## Complete Example
+
+Here's a complete example showing various widgets in use:
+
+```python
+from fp_admin.registry import ViewBuilder
+from fp_admin.models.field import FieldFactory
+from .models import User, Group, Department
+
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
 
     fields = [
-        # Readonly primary key
-        FieldFactory.primarykey_field("id", "ID"),
+        # Primary key (readonly)
+        FieldFactory.primary_key_field("id"),
 
-        # Text inputs
-        FieldFactory.string_field("username", "Username", required=True, min_length=3),
-        FieldFactory.string_field("first_name", "First Name", required=True),
-        FieldFactory.string_field("last_name", "Last Name", required=True),
+        # Basic information with custom widgets
+        FieldFactory.string_field("username", required=True, placeholder="Enter username"),
+        FieldFactory.string_field("first_name", required=True, placeholder="Enter first name"),
+        FieldFactory.string_field("last_name", required=True, placeholder="Enter last name"),
+        FieldFactory.email_field("email", required=True, placeholder="Enter email address"),
 
-        # Email input
-        FieldFactory.email_field("email", "Email", required=True),
+        # Security fields
+        FieldFactory.password_field("password", required=True, min_length=8, placeholder="Enter password"),
+        FieldFactory.toggle_field("is_active", required=True),  # Switch widget
+        FieldFactory.radio_field("role", required=True, choices=["user", "admin", "moderator"]),
 
-        # Password input
-        FieldFactory.password_field("password", "Password", required=True, min_length=8),
+        # Additional information
+        FieldFactory.text_field("bio", rows=4, max_length=500, placeholder="Tell us about yourself"),
+        FieldFactory.number_field("age", min_value=13, max_value=120, placeholder="Enter age"),
 
-        # Boolean toggles
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-
-        # Textarea for longer content
-        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
-
-        # Many-to-many selection
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+        # Relationships
+        FieldFactory.foreignkey_field(
+            "department_id",
+            model_class=Department,
+            display_field="name",
+            required=True,
+            placeholder="Select department"
+        ),
+        FieldFactory.many_to_many_field(
+            "groups",
+            model_class=Group,
+            display_field="name",
+            required=False,
+            widget="chips"  # Use chips widget
+        ),
     ]
-```
 
-### Group Form Widgets
-
-```python
-class GroupFormView(BaseViewBuilder):
-    model = Group
-    view_type = "form"
-    name = "GroupForm"
-
-    fields = [
-        # Readonly primary key
-        FieldFactory.primarykey_field("id", "ID"),
-
-        # Text inputs
-        FieldFactory.string_field("name", "Name", required=True, min_length=1),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-
-        # Many-to-many selections
-        FieldFactory.many_to_many_field("permissions", "Permissions", model_class=Permission, field_title="name"),
-        FieldFactory.many_to_many_field("users", "Users", model_class=User, field_title="username"),
-    ]
-```
-
-### Permission Form Widgets
-
-```python
-class PermissionFormView(BaseViewBuilder):
-    model = Permission
-    view_type = "form"
-    name = "PermissionForm"
-
-    fields = [
-        # Readonly primary key
-        FieldFactory.primarykey_field("id", "ID"),
-
-        # Text inputs
-        FieldFactory.string_field("codename", "Code Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-
-        # Many-to-many selection
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
+    creation_fields = ["username", "first_name", "last_name", "email", "password", "is_active", "role", "age", "department_id"]
+    allowed_update_fields = ["first_name", "last_name", "email", "is_active", "role", "bio", "age", "department_id", "groups"]
 ```
 
 ## Widget Behavior
@@ -253,7 +385,7 @@ class PermissionFormView(BaseViewBuilder):
 
 Form widgets are used in create and edit forms:
 
-- **Text inputs**: Single-line text entry
+- **Text inputs**: Single-line text entry with validation
 - **Email inputs**: Email validation with proper keyboard on mobile
 - **Password inputs**: Hidden characters with strength indicators
 - **Textarea**: Multi-line text entry with resizable area
@@ -268,149 +400,51 @@ List widgets are used in table displays:
 - **Text fields**: Plain text display
 - **Email fields**: Clickable email links
 - **Boolean fields**: Checkmark or toggle display
-- **Primary key**: Plain number display
-- **Relationships**: Display related object names
+- **Date fields**: Formatted date display
+- **Relationship fields**: Related object display
 
-## Widget Validation
+## Custom Widget Configuration
 
-### Client-Side Validation
+### Overriding Default Widgets
+
+You can override the default widget for any field type:
 
 ```python
-# Required field validation
-FieldFactory.string_field("username", "Username", required=True)
+# Use radio buttons instead of dropdown for choice field
+FieldFactory.choice_field(
+    "status",
+    widget="radio",  # Override default "select" widget
+    choices=["active", "inactive", "pending"],
+    required=True
+)
 
-# Length validation
-FieldFactory.string_field("title", "Title", min_length=1, max_length=200)
-
-# Pattern validation
-FieldFactory.string_field("phone", "Phone", pattern=r"^\+?1?\d{9,15}$")
-
-# Email validation
-FieldFactory.email_field("email", "Email", required=True)
-
-# Password strength
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
+# Use chips instead of listbox for multi-choice
+FieldFactory.multichoice_field(
+    "tags",
+    widget="chips",  # Override default widget
+    choices=["python", "fastapi", "admin"],
+    required=False
+)
 ```
 
-### Server-Side Validation
-
-All field validations are also enforced on the server side:
-
-- Required field checking
-- Length constraints
-- Pattern matching
-- Email format validation
-- Password strength requirements
-- Relationship integrity
-
-## Widget Styling
-
-### Default Styling
-
-All widgets come with consistent styling:
-
-- **Text inputs**: Clean, modern appearance
-- **Email inputs**: Email-specific styling
-- **Password inputs**: Secure appearance with strength indicators
-- **Textarea**: Resizable with proper padding
-- **Boolean toggles**: Modern switch appearance
-- **Dropdowns**: Searchable with clear options
-- **Multi-select**: Tag-like appearance for selected items
-
-### Responsive Design
-
-All widgets are responsive:
-
-- **Mobile**: Touch-friendly controls
-- **Tablet**: Optimized for touch and mouse
-- **Desktop**: Full keyboard and mouse support
-
-## Widget Accessibility
-
-### Accessibility Features
-
-All widgets include accessibility features:
-
-- **Screen readers**: Proper ARIA labels
-- **Keyboard navigation**: Full keyboard support
-- **Focus management**: Clear focus indicators
-- **Color contrast**: WCAG compliant colors
-- **Error messages**: Clear, descriptive errors
-
-### Keyboard Shortcuts
-
-- **Tab**: Navigate between fields
-- **Enter**: Submit forms
-- **Escape**: Cancel or close dialogs
-- **Arrow keys**: Navigate dropdowns and lists
-
-## Widget Performance
-
-### Optimization Features
-
-Widgets are optimized for performance:
-
-- **Lazy loading**: Load data as needed
-- **Debounced search**: Efficient search in dropdowns
-- **Virtual scrolling**: Handle large lists efficiently
-- **Caching**: Cache frequently used data
-
-### Best Practices
+### Widget-Specific Configuration
 
 ```python
-# Use appropriate field types
-FieldFactory.email_field("email", "Email")  # Better than string_field for emails
-FieldFactory.boolean_field("is_active", "Active")  # Better than choice_field for booleans
-
-# Provide meaningful validation
-FieldFactory.string_field("username", "Username", required=True, min_length=3)
-
-# Use relationships efficiently
-FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name")
-```
-
-## Widget Customization
-
-### Field-Level Customization
-
-```python
-# Custom validation messages
+# Custom placeholder for specific widget
 FieldFactory.string_field(
-    "username",
-    "Username",
-    required=True,
-    min_length=3,
-    max_length=50
+    "phone",
+    widget="phone",
+    placeholder="+1 (555) 123-4567"
 )
 
-# Custom field behavior
-FieldFactory.textarea_field(
-    "description",
-    "Description",
-    rows=5,
-    max_length=1000
+# Custom configuration for number field
+FieldFactory.number_field(
+    "rating",
+    min_value=1,
+    max_value=5,
+    step=1,
+    placeholder="Select rating from 1 to 5"
 )
-```
-
-### View-Level Customization
-
-```python
-class CustomUserFormView(BaseViewBuilder):
-    model = User
-    view_type = "form"
-    name = "CustomUserForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username", required=True),
-        FieldFactory.email_field("email", "Email", required=True),
-        FieldFactory.password_field("password", "Password", required=True, min_length=8),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
-
-    creation_fields = ["username", "email", "password", "is_active"]
-    allowed_update_fields = ["email", "is_active", "groups"]
 ```
 
 ## Widget Testing
@@ -419,30 +453,32 @@ class CustomUserFormView(BaseViewBuilder):
 
 ```python
 import pytest
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.models.field import FieldFactory
 
-def test_string_field_validation():
-    """Test string field validation"""
-    field = FieldFactory.string_field("username", "Username", required=True, min_length=3)
+def test_string_field_widget():
+    """Test string field widget configuration"""
+    field = FieldFactory.string_field("username", required=True, placeholder="Enter username")
 
-    # Test validation
+    # Test widget configuration
+    assert field.widget is None  # Default widget
+    assert field.placeholder == "Enter username"
     assert field.required is True
-    assert field.min_length == 3
 
-def test_email_field_validation():
-    """Test email field validation"""
-    field = FieldFactory.email_field("email", "Email", required=True)
+def test_choice_field_widget():
+    """Test choice field widget configuration"""
+    field = FieldFactory.choice_field("status", widget="radio", choices=["active", "inactive"])
 
-    # Test validation
-    assert field.required is True
-    assert field.field_type == "email"
+    # Test widget configuration
+    assert field.widget == "radio"
+    assert field.field_type == "choice"
 
-def test_boolean_field_behavior():
-    """Test boolean field behavior"""
-    field = FieldFactory.boolean_field("is_active", "Active")
+def test_boolean_field_widget():
+    """Test boolean field widget behavior"""
+    field = FieldFactory.boolean_field("is_active", required=True)
 
-    # Test behavior
+    # Test widget configuration
     assert field.field_type == "boolean"
+    assert field.required is True
 ```
 
 ## Widget Best Practices
@@ -450,37 +486,32 @@ def test_boolean_field_behavior():
 ### 1. Choose Appropriate Widgets
 
 ```python
-# Good: Use email field for email addresses
-FieldFactory.email_field("email", "Email", required=True)
+# Good: Use toggle for boolean fields
+FieldFactory.toggle_field("is_active", required=True)
 
-# Good: Use password field for passwords
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
+# Good: Use radio for small choice sets
+FieldFactory.radio_field("status", choices=["active", "inactive"], required=True)
 
-# Good: Use boolean field for true/false values
-FieldFactory.boolean_field("is_active", "Active")
+# Good: Use chips for multiple selections
+FieldFactory.chips_field("tags", choices=["python", "fastapi"], required=False)
 ```
 
-### 2. Provide Meaningful Validation
+### 2. Provide Meaningful Placeholders
 
 ```python
-# Good: Validate required fields
-FieldFactory.string_field("username", "Username", required=True, min_length=3)
-
-# Good: Validate email format
-FieldFactory.email_field("email", "Email", required=True)
-
-# Good: Validate password strength
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
+# Good: Clear, descriptive placeholders
+FieldFactory.string_field("username", placeholder="Enter unique username")
+FieldFactory.email_field("email", placeholder="Enter valid email address")
+FieldFactory.number_field("age", placeholder="Enter age (13-120)")
 ```
 
-### 3. Use Relationships Efficiently
+### 3. Use Widgets Efficiently
 
 ```python
-# Good: Use many-to-many for multiple selections
-FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name")
-
-# Good: Use foreign key for single selections
-FieldFactory.foreign_key_field("department_id", "Department", model_class=Department, field_title="name")
+# Good: Use appropriate widgets for data types
+FieldFactory.toggle_field("is_verified", required=True)  # Boolean
+FieldFactory.choice_field("category", choices=["tech", "lifestyle"], required=True)  # Single choice
+FieldFactory.chips_field("skills", choices=["python", "javascript"], required=False)  # Multiple choice
 ```
 
 ### 4. Organize Fields Logically
@@ -488,26 +519,52 @@ FieldFactory.foreign_key_field("department_id", "Department", model_class=Depart
 ```python
 fields = [
     # Primary key first
-    FieldFactory.primarykey_field("id", "ID"),
+    FieldFactory.primary_key_field("id"),
 
     # Basic information
-    FieldFactory.string_field("username", "Username", required=True),
-    FieldFactory.string_field("first_name", "First Name", required=True),
-    FieldFactory.string_field("last_name", "Last Name", required=True),
-    FieldFactory.email_field("email", "Email", required=True),
+    FieldFactory.string_field("username", required=True, placeholder="Enter username"),
+    FieldFactory.email_field("email", required=True, placeholder="Enter email"),
 
     # Security
-    FieldFactory.password_field("password", "Password", required=True, min_length=8),
-    FieldFactory.boolean_field("is_active", "Active"),
+    FieldFactory.password_field("password", required=True, placeholder="Enter password"),
+    FieldFactory.toggle_field("is_active", required=True),
 
     # Relationships
-    FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+    FieldFactory.many_to_many_field("groups", model_class=Group, display_field="name"),
 ]
+```
+
+## Performance Considerations
+
+### 1. Widget Selection
+
+Choose widgets that provide the best user experience without compromising performance:
+
+```python
+# Good: Use chips for small choice sets
+FieldFactory.chips_field("status", choices=["active", "inactive", "pending"])
+
+# Good: Use listbox for large choice sets
+FieldFactory.listbox_field("permissions", choices=large_permission_list)
+```
+
+### 2. Relationship Loading
+
+Configure relationship widgets efficiently:
+
+```python
+# Good: Specify display fields for performance
+FieldFactory.foreignkey_field(
+    "category_id",
+    model_class=Category,
+    display_field="name",  # Only load the name field
+    required=True
+)
 ```
 
 ## Next Steps
 
-- **[Field Types](field-types.md)** - Learn about all available field types
-- **[Admin Models](admin-models.md)** - Configure admin interfaces
-- **[Authentication](authentication.md)** - Set up user management
-- **[CLI Commands](cli-commands.md)** - Learn about development tools
+- **[Field Types](../user-guide/field-types.md)** - Learn about all available field types
+- **[Admin Models](../user-guide/admin-models.md)** - Configure admin interfaces with widgets
+- **[Custom Fields](../advanced/custom-fields.md)** - Create custom widgets and field types
+- **[API Reference](../api/models.md)** - Explore the REST API endpoints

@@ -88,7 +88,7 @@ The endpoint returns appropriate error responses:
 You can restrict which fields can be updated by setting `allowed_update_fields` in your view builder:
 
 ```python
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     name = "user_form"
     model = User
     view_type = "form"
@@ -125,7 +125,7 @@ When `allowed_update_fields` is configured, the update endpoint will validate th
 Similarly, you can restrict which fields can be used during creation by setting `creation_fields`:
 
 ```python
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     # ... other configuration ...
 
     # Only allow creating username, email, and password fields
@@ -140,7 +140,7 @@ The system automatically validates that all fields referenced in `creation_field
 
 **Example of valid configuration:**
 ```python
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     name = "user_form"
     model = User
     view_type = "form"
@@ -157,7 +157,7 @@ class UserFormView(BaseViewBuilder):
 
 **Example of invalid configuration (will raise ValueError):**
 ```python
-class InvalidUserFormView(BaseViewBuilder):
+class InvalidUserFormView(ViewBuilder):
     name = "invalid_user_form"
     model = User
     view_type = "form"

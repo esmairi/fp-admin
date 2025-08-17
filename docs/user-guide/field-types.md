@@ -1,406 +1,192 @@
-# Field Types and Widgets Documentation
+# Field Types
 
-## Field Types and Widgets
+fp-admin provides a comprehensive set of field types through the `FieldFactory` class. Each field type is designed to handle specific data types and provide appropriate validation and widgets.
 
-fp-admin uses `FieldFactory` to create field configurations. Here are the available field types and their usage:
+## Overview
 
-| **Field Type**  | **Factory Method**                | **Description**                                                    |
-|-----------------|-----------------------------------|--------------------------------------------------------------------|
-| `primarykey`    | `FieldFactory.primarykey_field()` | Primary key field (auto-increment, UUID, etc.) - always readonly  |
-| `string`        | `FieldFactory.string_field()`     | Short or long text input                                          |
-| `email`         | `FieldFactory.email_field()`      | Email input with validation                                       |
-| `password`      | `FieldFactory.password_field()`   | Password input with hidden characters                             |
-| `boolean`       | `FieldFactory.boolean_field()`    | True/false toggle                                                 |
-| `textarea`      | `FieldFactory.textarea_field()`   | Multi-line text input                                             |
-| `many_to_many`  | `FieldFactory.many_to_many_field()` | Many-to-many relationships                                       |
-| `foreign_key`   | `FieldFactory.foreign_key_field()` | Foreign key relationships                                         |
+The `FieldFactory` class provides methods to create different types of fields for your admin forms and views. Each field type includes:
 
-## Field Factory Methods
+- **Type-specific validation**: Built-in validation for the field type
+- **Widget selection**: Appropriate input widgets for the field type
+- **Configuration options**: Flexible configuration through keyword arguments
+- **Relationship support**: Special handling for foreign keys and many-to-many fields
 
-### Primary Key Field
+## Basic Field Types
+
+### Primary Key Fields
 
 ```python
-FieldFactory.primarykey_field("id", "ID")
+from fp_admin.models.field import FieldFactory
+
+# Primary key field (readonly)
+FieldFactory.primary_key_field("id")
 ```
 
-**Purpose**: Primary key field (readonly)
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-
-### String Field
+### Text Fields
 
 ```python
-FieldFactory.string_field("username", "Username", required=True, min_length=3, max_length=150)
+# String input field
+FieldFactory.string_field("username", required=True, placeholder="Enter username")
+
+# Text area field
+FieldFactory.text_field("description", placeholder="Enter description")
+
+# Email field with validation
+FieldFactory.email_field("email", required=True, placeholder="Enter email")
+
+# Password field
+FieldFactory.password_field("password", required=True, placeholder="Enter password")
 ```
 
-**Purpose**: Text input fields
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `required`: Whether the field is required (default: False)
-- `min_length`: Minimum character length
-- `max_length`: Maximum character length
-- `pattern`: Regex pattern for validation
-
-### Email Field
+### Numeric Fields
 
 ```python
-FieldFactory.email_field("email", "Email", required=True)
+# Integer field
+FieldFactory.number_field("age", required=True, placeholder="Enter age")
+
+# Float field
+FieldFactory.float_field("price", required=True, placeholder="Enter price")
+
+# Slider field (same as number field)
+FieldFactory.slider_field("rating", required=True)
 ```
 
-**Purpose**: Email input with validation
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `required`: Whether the field is required (default: False)
-
-### Password Field
+### Date and Time Fields
 
 ```python
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
+# Date field
+FieldFactory.date_field("birth_date", required=True)
+
+# Time field
+FieldFactory.time_field("appointment_time", required=True)
+
+# DateTime field
+FieldFactory.datetime_field("created_at", required=True)
 ```
 
-**Purpose**: Password input with hidden characters
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `required`: Whether the field is required (default: False)
-- `min_length`: Minimum password length
-
-### Boolean Field
+### Boolean Fields
 
 ```python
-FieldFactory.boolean_field("is_active", "Active")
+# Boolean field
+FieldFactory.boolean_field("is_active", required=True)
+
+# Toggle field (switch widget)
+FieldFactory.toggle_field("is_verified", required=True)
+
+# Radio field
+FieldFactory.radio_field("status", required=True, choices=["active", "inactive"])
 ```
 
-**Purpose**: True/false toggle
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-
-### Textarea Field
+### Choice Fields
 
 ```python
-FieldFactory.textarea_field("description", "Description", rows=5, max_length=200)
+# Single choice field
+FieldFactory.choice_field("category", required=True, choices=["tech", "lifestyle", "news"])
+
+# Multiple choice field
+FieldFactory.multichoice_field("tags", required=True, choices=["python", "fastapi", "admin"])
+
+# Chips field (multiple choice with chips widget)
+FieldFactory.chips_field("skills", required=True, choices=["python", "javascript", "sql"])
+
+# Listbox field (multiple choice with listbox widget)
+FieldFactory.listbox_field("permissions", required=True, choices=["read", "write", "delete"])
 ```
 
-**Purpose**: Multi-line text input
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `rows`: Number of visible rows
-- `max_length`: Maximum character length
-
-### Many-to-Many Field
+### File Fields
 
 ```python
-FieldFactory.many_to_many_field(
-    "groups",
-    "Groups",
-    model_class=Group,
-    field_title="name"
-)
+# File upload field
+FieldFactory.file_field("document", required=True)
+
+# Image field (file field with image widget)
+FieldFactory.image_field("avatar", required=True)
 ```
 
-**Purpose**: Many-to-many relationships
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `model_class`: The related model class
-- `field_title`: The field to display from the related model
-
-### Foreign Key Field
+### Special Fields
 
 ```python
-FieldFactory.foreign_key_field(
-    "category_id",
-    "Category",
-    model_class=Category,
-    field_title="name"
-)
-```
+# JSON field
+FieldFactory.json_field("metadata", required=True)
 
-**Purpose**: Foreign key relationships
-**Parameters**:
-- `field_name`: The field name in the model
-- `field_title`: Display title for the field
-- `model_class`: The related model class
-- `field_title`: The field to display from the related model
-
-## Field Configuration Examples
-
-### Basic Form Fields
-
-```python
-from fp_admin.admin.fields import FieldFactory
-from .models import User, Group, Permission
-
-class UserFormView(BaseViewBuilder):
-    model = User
-    view_type = "form"
-    name = "UserForm"
-
-    fields = [
-        # Primary key (readonly)
-        FieldFactory.primarykey_field("id", "ID"),
-
-        # String fields
-        FieldFactory.string_field("username", "Username", required=True, min_length=3),
-        FieldFactory.string_field("first_name", "First Name", required=True),
-        FieldFactory.string_field("last_name", "Last Name", required=True),
-
-        # Email field
-        FieldFactory.email_field("email", "Email", required=True),
-
-        # Password field
-        FieldFactory.password_field("password", "Password", required=True, min_length=8),
-
-        # Boolean fields
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-
-        # Textarea field
-        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
-
-        # Many-to-many relationships
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
-```
-
-### List View Fields
-
-```python
-class UserListView(BaseViewBuilder):
-    model = User
-    view_type = "list"
-    name = "UserList"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username"),
-        FieldFactory.string_field("first_name", "First Name"),
-        FieldFactory.string_field("last_name", "Last Name"),
-        FieldFactory.email_field("email", "Email"),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-    ]
-```
-
-### Group Form Fields
-
-```python
-class GroupFormView(BaseViewBuilder):
-    model = Group
-    view_type = "form"
-    name = "GroupForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-        FieldFactory.many_to_many_field("permissions", "Permissions", model_class=Permission, field_title="name"),
-        FieldFactory.many_to_many_field("users", "Users", model_class=User, field_title="username"),
-    ]
-```
-
-### Permission Form Fields
-
-```python
-class PermissionFormView(BaseViewBuilder):
-    model = Permission
-    view_type = "form"
-    name = "PermissionForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("codename", "Code Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
-```
-
-## Field Validation
-
-### String Validation
-
-```python
-# Required field with length constraints
-FieldFactory.string_field(
-    "title",
-    "Title",
-    required=True,
-    min_length=1,
-    max_length=200
-)
-
-# Field with pattern validation
-FieldFactory.string_field(
-    "phone",
-    "Phone Number",
-    pattern=r"^\+?1?\d{9,15}$"
-)
-```
-
-### Email Validation
-
-```python
-# Email field with built-in validation
-FieldFactory.email_field("email", "Email", required=True)
-```
-
-### Password Validation
-
-```python
-# Password with strength requirements
-FieldFactory.password_field(
-    "password",
-    "Password",
-    required=True,
-    min_length=8
-)
-```
-
-### Textarea Validation
-
-```python
-# Textarea with size constraints
-FieldFactory.textarea_field(
-    "description",
-    "Description",
-    rows=5,
-    max_length=1000
-)
+# Autocomplete field
+FieldFactory.autocomplete_field("search", required=True, placeholder="Start typing...")
 ```
 
 ## Relationship Fields
 
-### Many-to-Many Relationships
+### Foreign Key Fields
 
 ```python
-# User groups
-FieldFactory.many_to_many_field(
-    "groups",
-    "Groups",
-    model_class=Group,
-    field_title="name"
-)
+from .models import Category, User
 
-# Group permissions
-FieldFactory.many_to_many_field(
-    "permissions",
-    "Permissions",
-    model_class=Permission,
-    field_title="name"
-)
-
-# Group users
-FieldFactory.many_to_many_field(
-    "users",
-    "Users",
-    model_class=User,
-    field_title="username"
+# Foreign key field
+FieldFactory.foreignkey_field(
+    "category_id",
+    model_class=Category,
+    display_field="name",
+    required=True
 )
 ```
 
-### Foreign Key Relationships
+### Many-to-Many Fields
 
 ```python
-# User's department
-FieldFactory.foreign_key_field(
-    "department_id",
-    "Department",
-    model_class=Department,
-    field_title="name"
-)
-
-# Post's author
-FieldFactory.foreign_key_field(
-    "author_id",
-    "Author",
-    model_class=User,
-    field_title="username"
+# Many-to-many field
+FieldFactory.many_to_many_field(
+    "tags",
+    model_class=Tag,
+    display_field="name",
+    required=False
 )
 ```
 
-## Field Configuration Best Practices
-
-### 1. Use Appropriate Field Types
+### One-to-One Fields
 
 ```python
-# Good: Use email field for email addresses
-FieldFactory.email_field("email", "Email", required=True)
-
-# Good: Use password field for passwords
-FieldFactory.password_field("password", "Password", required=True, min_length=8)
-
-# Good: Use boolean field for true/false values
-FieldFactory.boolean_field("is_active", "Active")
+# One-to-one field
+FieldFactory.one_to_one_field(
+    "profile",
+    model_class=UserProfile,
+    display_field="username",
+    required=False
+)
 ```
 
-### 2. Provide Meaningful Validation
+## Field Configuration Options
+
+All field types support these common configuration options:
 
 ```python
-# String field with length validation
 FieldFactory.string_field(
     "username",
-    "Username",
-    required=True,
-    min_length=3,
-    max_length=50
-)
-
-# Textarea with size limits
-FieldFactory.textarea_field(
-    "description",
-    "Description",
-    rows=4,
-    max_length=500
+    required=True,           # Field is required
+    readonly=False,          # Field is read-only
+    disabled=False,          # Field is disabled
+    placeholder="Enter username",  # Placeholder text
+    help_text="Username must be unique",  # Help text
+    widget="text",           # Specific widget type
+    validators=[],           # Custom validators
+    custom_validator=None    # Custom validation function
 )
 ```
 
-### 3. Use Relationships Appropriately
+### Widget Configuration
 
 ```python
-# Many-to-many for multiple selections
-FieldFactory.many_to_many_field(
-    "groups",
-    "Groups",
-    model_class=Group,
-    field_title="name"
+# Custom widget for string field
+FieldFactory.string_field(
+    "phone",
+    widget="phone",
+    placeholder="+1 (555) 123-4567"
 )
 
-# Foreign key for single selection
-FieldFactory.foreign_key_field(
-    "category_id",
-    "Category",
-    model_class=Category,
-    field_title="name"
+# Custom widget for choice field
+FieldFactory.choice_field(
+    "status",
+    widget="radio",
+    choices=["active", "inactive", "pending"]
 )
-```
-
-### 4. Organize Fields Logically
-
-```python
-fields = [
-    # Primary key first
-    FieldFactory.primarykey_field("id", "ID"),
-
-    # Basic information
-    FieldFactory.string_field("username", "Username", required=True),
-    FieldFactory.string_field("first_name", "First Name", required=True),
-    FieldFactory.string_field("last_name", "Last Name", required=True),
-    FieldFactory.email_field("email", "Email", required=True),
-
-    # Security
-    FieldFactory.password_field("password", "Password", required=True, min_length=8),
-    FieldFactory.boolean_field("is_active", "Active"),
-    FieldFactory.boolean_field("is_superuser", "Superuser"),
-
-    # Relationships
-    FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-]
 ```
 
 ## Complete Example
@@ -408,45 +194,197 @@ fields = [
 Here's a complete example showing all field types in use:
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.registry import ViewBuilder
+from fp_admin.models.field import FieldFactory
 from .models import User, Group, Permission, Department
 
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
 
     fields = [
         # Primary key
-        FieldFactory.primarykey_field("id", "ID"),
+        FieldFactory.primary_key_field("id"),
 
         # Basic information
-        FieldFactory.string_field("username", "Username", required=True, min_length=3, max_length=150),
-        FieldFactory.string_field("first_name", "First Name", required=True, max_length=100),
-        FieldFactory.string_field("last_name", "Last Name", required=True, max_length=100),
-        FieldFactory.email_field("email", "Email", required=True),
+        FieldFactory.string_field("username", required=True, min_length=3, max_length=150),
+        FieldFactory.string_field("first_name", required=True, max_length=100),
+        FieldFactory.string_field("last_name", required=True, max_length=100),
+        FieldFactory.email_field("email", required=True),
 
         # Security
-        FieldFactory.password_field("password", "Password", required=True, min_length=8),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
+        FieldFactory.password_field("password", required=True, min_length=8),
+        FieldFactory.boolean_field("is_active", required=True),
+        FieldFactory.boolean_field("is_superuser", required=True),
 
         # Additional information
-        FieldFactory.textarea_field("bio", "Biography", rows=4, max_length=500),
+        FieldFactory.text_field("bio", rows=4, max_length=500),
 
         # Relationships
-        FieldFactory.foreign_key_field("department_id", "Department", model_class=Department, field_title="name"),
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
+        FieldFactory.foreignkey_field("department_id", model_class=Department, display_field="name"),
+        FieldFactory.many_to_many_field("groups", model_class=Group, display_field="name"),
     ]
 
     creation_fields = ["username", "first_name", "last_name", "email", "password", "is_active", "is_superuser", "department_id"]
     allowed_update_fields = ["first_name", "last_name", "email", "is_active", "is_superuser", "bio", "department_id", "groups"]
 ```
 
-This example demonstrates:
-- All available field types
-- Proper validation rules
-- Relationship handling
-- Field organization
-- Creation and update field restrictions
+## Field Validation
+
+### Built-in Validation
+
+Each field type includes appropriate validation:
+
+- **String fields**: Length constraints, pattern matching
+- **Email fields**: Email format validation
+- **Numeric fields**: Range validation, type checking
+- **Date fields**: Date format validation
+- **Required fields**: Non-empty value validation
+
+### Custom Validation
+
+You can add custom validation to any field:
+
+```python
+from fp_admin.models.field import FpFieldValidator, FpFieldError
+
+# Custom validator
+def validate_username_unique(value: str) -> FpFieldError | None:
+    if value == "admin":
+        return FpFieldError(
+            code="reserved_username",
+            message="Username 'admin' is reserved"
+        )
+    return None
+
+# Apply custom validator
+FieldFactory.string_field(
+    "username",
+    required=True,
+    custom_validator=validate_username_unique
+)
+```
+
+### Validator Configuration
+
+```python
+# Field with multiple validators
+FieldFactory.string_field(
+    "phone",
+    required=True,
+    validators=[
+        FpFieldValidator(
+            name="format",
+            condition_value=r"^\+?1?\d{9,15}$",
+            error=FpFieldError(
+                code="invalid_format",
+                message="Phone number must be in valid format"
+            )
+        )
+    ]
+)
+```
+
+## Best Practices
+
+### 1. Choose Appropriate Field Types
+
+```python
+# Good: Use email field for email addresses
+FieldFactory.email_field("email", required=True)
+
+# Good: Use password field for passwords
+FieldFactory.password_field("password", required=True, min_length=8)
+
+# Good: Use boolean field for true/false values
+FieldFactory.boolean_field("is_active", required=True)
+```
+
+### 2. Provide Meaningful Validation
+
+```python
+# Good: Validate required fields
+FieldFactory.string_field("username", required=True, min_length=3)
+
+# Good: Validate email format
+FieldFactory.email_field("email", required=True)
+
+# Good: Validate password strength
+FieldFactory.password_field("password", required=True, min_length=8)
+```
+
+### 3. Use Relationships Efficiently
+
+```python
+# Good: Use many-to-many for multiple selections
+FieldFactory.many_to_many_field("groups", model_class=Group, display_field="name")
+
+# Good: Use foreign key for single selections
+FieldFactory.foreignkey_field("department_id", model_class=Department, display_field="name")
+```
+
+### 4. Organize Fields Logically
+
+```python
+fields = [
+    # Primary key first
+    FieldFactory.primary_key_field("id"),
+
+    # Basic information
+    FieldFactory.string_field("username", required=True),
+    FieldFactory.string_field("first_name", required=True),
+    FieldFactory.string_field("last_name", required=True),
+    FieldFactory.email_field("email", required=True),
+
+    # Security
+    FieldFactory.password_field("password", required=True, min_length=8),
+    FieldFactory.boolean_field("is_active", required=True),
+    FieldFactory.boolean_field("is_superuser", required=True),
+
+    # Relationships
+    FieldFactory.many_to_many_field("groups", model_class=Group, display_field="name"),
+]
+```
+
+## Performance Considerations
+
+### 1. Field Selection
+
+Only include fields that are necessary for your use case:
+
+```python
+# Minimal fields for list view
+list_fields = [
+    FieldFactory.primary_key_field("id"),
+    FieldFactory.string_field("username"),
+    FieldFactory.email_field("email"),
+    FieldFactory.boolean_field("is_active"),
+]
+
+# Full fields for form view
+form_fields = [
+    # ... all fields including relationships
+]
+```
+
+### 2. Relationship Loading
+
+Configure relationship fields with appropriate display fields:
+
+```python
+# Efficient relationship field
+FieldFactory.many_to_many_field(
+    "groups",
+    model_class=Group,
+    display_field="name",  # Only load the name field
+    required=False
+)
+```
+
+## Next Steps
+
+- **[Widgets](../user-guide/widgets.md)** - Learn about available widgets and their configuration
+- **[Admin Models](../user-guide/admin-models.md)** - Configure admin interfaces with fields
+- **[Custom Fields](../advanced/custom-fields.md)** - Create custom field types and validators
+- **[API Reference](../api/models.md)** - Explore the REST API endpoints

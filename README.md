@@ -299,12 +299,12 @@ Features demonstrated:
 ### Custom View Configuration
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
+from fp_admin.registry import ViewBuilder
 from fp_admin.admin.fields import FieldView
 
 
 # Configure admin model with custom fields
-class PostFormView(BaseViewBuilder):
+class PostFormView(ViewBuilder):
     model = Post
     view_type = "form"
     name = "PostForm"

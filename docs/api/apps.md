@@ -106,7 +106,7 @@ Applications are automatically discovered and registered when they follow the fp
 
 ```python
 # apps.py
-from fp_admin.admin.apps import AppConfig
+from fp_admin.registry import AppConfig
 
 class AuthConfig(AppConfig):
     name = "auth"
@@ -350,7 +350,7 @@ API_VERSION = "v1"
 
 ```python
 # apps.py
-from fp_admin.admin.apps import AppConfig
+from fp_admin.registry import AppConfig
 
 class CustomAppConfig(AppConfig):
     name = "custom_app"

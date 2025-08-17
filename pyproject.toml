@@ -21,7 +21,7 @@ classifiers = [
 dependencies = [
     "fastapi[standard]",
     "pydantic-settings",
-    "sqlmodel[asyncio]",
+    "sqlmodel",
     "alembic",
     "passlib[bcrypt]",
     "uvicorn",
@@ -47,7 +47,9 @@ dev = [
     "twine==6.1.0",
     "bandit==1.7.8",
     "pytest-env",
-    "mkdocs-material"
+    "mkdocs-material",
+    "mkdocs-material-extensions>=1.3.1",
+    "pymdown-extensions>=10.16",
 ]
 
 [project.urls]
@@ -84,4 +86,9 @@ asyncio_mode = "auto"
 markers = [
     "e2e: End-to-end tests",
     "slow: Slow running tests",
+]
+
+[dependency-groups]
+dev = [
+    "mkdocs-git-revision-date-localized-plugin>=1.4.7",
 ]
