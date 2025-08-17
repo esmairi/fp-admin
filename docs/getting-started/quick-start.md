@@ -85,16 +85,18 @@ class Post(SQLModel, table=True):
 Edit `apps/blog/admin.py` to register your models with the admin interface:
 
 ```python
-from fp_admin.admin.models import AdminModel
+from fp_admin.registry import AdminModel
 from .models import Category, Post
 
 class CategoryAdmin(AdminModel):
     model = Category
     label = "Categories"
+    display_field = "name"
 
 class PostAdmin(AdminModel):
     model = Post
     label = "Posts"
+    display_field = "title"
 ```
 
 ## Step 5: Create Admin Views
@@ -102,28 +104,27 @@ class PostAdmin(AdminModel):
 Edit `apps/blog/views.py` to define detailed admin views:
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.registry import ViewBuilder
+from fp_admin.models.field import FieldFactory
 from .models import Category, Post
 
-class CategoryFormView(BaseViewBuilder):
+class CategoryFormView(ViewBuilder):
     model = Category
     view_type = "form"
     name = "CategoryForm"
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, max_length=100),
-        FieldFactory.string_field("slug", "Slug", required=True, max_length=100),
-        FieldFactory.textarea_field("description", "Description", max_length=500),
-        FieldFactory.color_field("color", "Color", max_length=7),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.datetime_field("created_at", "Created At"),
-        FieldFactory.datetime_field("updated_at", "Updated At"),
+        FieldFactory.primary_key_field("id"),
+        FieldFactory.string_field("name", required=True, max_length=100),
+        FieldFactory.string_field("slug", required=True, max_length=100),
+        FieldFactory.text_field("description", max_length=500),
+        FieldFactory.string_field("color", max_length=7),
+        FieldFactory.boolean_field("is_active"),
+        FieldFactory.datetime_field("created_at"),
+        FieldFactory.datetime_field("updated_at"),
     ]
 
     creation_fields = ["name", "slug", "description", "color", "is_active"]
     allowed_update_fields = ["name", "slug", "description", "color", "is_active"]
-
 ```
 
 ## Step 6: Register Your App
@@ -131,7 +132,7 @@ class CategoryFormView(BaseViewBuilder):
 Edit `apps/blog/apps.py` to register your app:
 
 ```python
-from fp_admin.admin.apps import AppConfig
+from fp_admin.registry import AppConfig
 
 class BlogConfig(AppConfig):
     name = "blog"
@@ -173,9 +174,9 @@ You can add sample data programmatically:
 ```python
 # In a Python shell or script
 from apps.blog.models import Category, Post
-from fp_admin.core.database import get_session
+from fp_admin.core.db import db_manager
 
-with get_session() as session:
+async with db_manager.get_session() as session:
     # Create categories
     tech = Category(name="Technology", description="Tech-related posts")
     lifestyle = Category(name="Lifestyle", description="Lifestyle posts")
@@ -205,9 +206,25 @@ Simple model registration that tells fp-admin which models to include in the adm
 class PostAdmin(AdminModel):
     model = Post
     label = "Posts"
+    display_field = "title"
 ```
 
+### 2. View Configuration (views.py)
+Detailed configuration that defines how forms and lists appear:
 
+```python
+class PostFormView(ViewBuilder):
+    model = Post
+    view_type = "form"
+    name = "PostForm"
+    fields = [
+        FieldFactory.primary_key_field("id"),
+        FieldFactory.string_field("title", required=True),
+        FieldFactory.text_field("content", required=True),
+        FieldFactory.boolean_field("published"),
+        FieldFactory.foreignkey_field("category_id", model_class=Category, display_field="name"),
+    ]
+```
 
 ## Advanced Configuration
 
@@ -240,14 +257,13 @@ MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 You can create custom field types:
 
 ```python
-from fp_admin.admin.fields import FieldView
+from fp_admin.models.field import FieldFactory
 
 # Custom rich text field
-class RichTextField(FieldView):
-    def __init__(self, name: str, label: str, **kwargs):
+class RichTextField(FieldFactory):
+    def __init__(self, name: str, **kwargs):
         super().__init__(
             name=name,
-            label=label,
             field_type="string",
             widget="richtext",
             **kwargs

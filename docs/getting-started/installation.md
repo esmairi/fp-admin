@@ -84,30 +84,68 @@ pytest --cov=fp_admin
 
 ## Database Setup
 
-fp-admin supports multiple database backends:
+fp-admin uses **async database operations** by default, providing better performance and scalability. The framework supports multiple async database backends:
 
-### SQLite (Default)
+### SQLite (Default - Async)
 
-No additional setup required. SQLite is included with Python.
-
-### PostgreSQL
+fp-admin uses `aiosqlite` for async SQLite operations:
 
 ```bash
-# Install PostgreSQL adapter
-pip install psycopg2-binary
-
-# Or using uv
-uv add psycopg2-binary
+# No additional setup required for SQLite
+# aiosqlite is included in fp-admin dependencies
 ```
 
-### MySQL
+**Default Database URL**: `sqlite+aiosqlite:///./fpadmin.db`
+
+### PostgreSQL (Async)
+
+For PostgreSQL, use the async adapter:
 
 ```bash
-# Install MySQL adapter
-pip install mysqlclient
+# Install async PostgreSQL adapter
+pip install asyncpg
 
 # Or using uv
-uv add mysqlclient
+uv add asyncpg
+```
+
+**Database URL Format**: `postgresql+asyncpg://user:password@localhost/dbname`
+
+### MySQL (Async)
+
+For MySQL, use the async adapter:
+
+```bash
+# Install async MySQL adapter
+pip install aiomysql
+
+# Or using uv
+uv add aiomysql
+```
+
+**Database URL Format**: `mysql+aiomysql://user:password@localhost/dbname`
+
+### Async Database Benefits
+
+- **Non-blocking I/O**: Database operations don't block the event loop
+- **Better concurrency**: Handle multiple requests simultaneously
+- **Scalability**: Improved performance under high load
+- **Modern architecture**: Built for async/await patterns
+
+### Async Database Configuration
+
+fp-admin automatically handles async database connections. Your models and services will work with async/await patterns:
+
+```python
+from fp_admin.core.db import db_manager
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+async def example_operation():
+    async with db_manager.get_session() as session:
+        # All database operations are async
+        result = await session.exec(select(User))
+        users = result.all()
+        return users
 ```
 
 ## Environment Variables
@@ -115,8 +153,10 @@ uv add mysqlclient
 Create a `.env` file in your project root:
 
 ```bash
-# Database
-DATABASE_URL=sqlite:///./app.db
+# Database (Async)
+DATABASE_URL=sqlite+aiosqlite:///./fpadmin.db
+# For PostgreSQL: postgresql+asyncpg://user:password@localhost/dbname
+# For MySQL: mysql+aiomysql://user:password@localhost/dbname
 
 # Security
 SECRET_KEY=your-secret-key-here
@@ -160,11 +200,27 @@ python --version
 
 #### 2. Database Connection Issues
 
-Check your database URL format:
+Check your database URL format for async operations:
 
-- SQLite: `sqlite:///./app.db`
-- PostgreSQL: `postgresql://user:password@localhost/dbname`
-- MySQL: `mysql://user:password@localhost/dbname`
+- **SQLite (Async)**: `sqlite+aiosqlite:///./fpadmin.db`
+- **PostgreSQL (Async)**: `postgresql+asyncpg://user:password@localhost/dbname`
+- **MySQL (Async)**: `mysql+aiomysql://user:password@localhost/dbname`
+
+**Note**: Make sure you're using the async database adapters (`aiosqlite`, `asyncpg`, `aiomysql`) for optimal performance.
+
+#### 2.1. Async Database Specific Issues
+
+If you encounter async-related errors:
+
+```bash
+# Make sure you have the correct async adapters
+pip install aiosqlite asyncpg aiomysql
+
+# Check if your code uses async/await patterns
+# Database operations should be awaited:
+# result = await session.exec(query)  # ✅ Correct
+# result = session.exec(query)        # ❌ Wrong
+```
 
 #### 3. Permission Issues
 
@@ -192,10 +248,20 @@ source venv/bin/activate
 pip install fp-admin
 ```
 
+## Async Development Best Practices
+
+When working with fp-admin's async database:
+
+1. **Always use async/await**: Database operations must be awaited
+2. **Use async context managers**: `async with db_manager.get_session() as session:`
+3. **Handle async errors properly**: Use try/catch with async operations
+4. **Avoid blocking operations**: Keep database operations non-blocking
+
 ## Next Steps
 
 After installation, proceed to:
 
 - **[Quick Start](quick-start.md)** - Create your first admin interface
 - **[Core Concepts](core-concepts.md)** - Understand the fundamental concepts
+- **[Configuration](../configuration/settings.md)** - Configure your application settings
 - **[User Guide](../user-guide/field-types.md)** - Learn about field types and widgets

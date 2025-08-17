@@ -1,586 +1,453 @@
-# Authentication (TODO)
+# Authentication
 
-This guide covers authentication and user management in fp-admin.
+fp-admin provides a comprehensive authentication system with support for multiple authentication providers, JWT tokens, and role-based access control.
 
 ## Overview
 
-fp-admin includes a complete authentication system with user management, role-based access control, and JWT token authentication.
+The authentication system is built around the concept of **providers** - modular components that handle different authentication methods:
 
-## User Model
+- **Internal Provider**: Username/password authentication with JWT tokens
+- **OAuth Providers**: External OAuth service integration (planned)
+- **Custom Providers**: Extensible provider system for custom authentication
 
-The default user model includes:
+## Quick Start
 
-```python
-from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional, List
-
-class User(SQLModel, table=True, table_name="user"):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    username: str = Field(title="Username", nullable=False, unique=True, max_length=150)
-    email: str = Field(
-        title="Email",
-        nullable=False,
-        unique=True,
-        regex=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$",
-    )
-    password: str = Field(title="Password", nullable=False)
-    is_active: bool = Field(default=True, nullable=False)
-    is_superuser: bool = Field(default=False, nullable=False)
-
-    groups: List["Group"] = Relationship(back_populates="users", link_model=UserGroupLink)
-```
-
-## Authentication Views
-
-### User Admin View
-
-```python
-from fp_admin.admin.views import BaseViewBuilder
-from fp_admin.admin.fields import FieldFactory
-from .models import User, Group
-
-class UserFormView(BaseViewBuilder):
-    model = User
-    view_type = "form"
-    name = "UserForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username", required=True),
-        FieldFactory.email_field("email", "Email", required=True),
-        FieldFactory.password_field("password", "Password", required=True, min_length=8),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
-
-    creation_fields = ["username", "email", "password", "is_active", "is_superuser"]
-    allowed_update_fields = ["email", "is_active", "is_superuser"]
-
-class UserListView(BaseViewBuilder):
-    model = User
-    view_type = "list"
-    name = "UserList"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username"),
-        FieldFactory.email_field("email", "Email"),
-        FieldFactory.boolean_field("is_active", "Active"),
-        FieldFactory.boolean_field("is_superuser", "Superuser"),
-    ]
-```
-
-### Group Admin View
-
-```python
-from .models import Group, Permission, User
-
-class GroupFormView(BaseViewBuilder):
-    model = Group
-    view_type = "form"
-    name = "GroupForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-        FieldFactory.many_to_many_field("permissions", "Permissions", model_class=Permission, field_title="name"),
-        FieldFactory.many_to_many_field("users", "Users", model_class=User, field_title="username"),
-    ]
-
-    creation_fields = ["name", "description"]
-    allowed_update_fields = ["name", "description", "permissions"]
-
-class GroupListView(BaseViewBuilder):
-    model = Group
-    view_type = "list"
-    name = "GroupList"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("description", "Description"),
-    ]
-```
-
-### Permission Admin View
-
-```python
-from .models import Permission, Group
-
-class PermissionFormView(BaseViewBuilder):
-    model = Permission
-    view_type = "form"
-    name = "PermissionForm"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("codename", "Code Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("name", "Name", required=True, min_length=1, max_length=150),
-        FieldFactory.string_field("description", "Description", required=True, min_length=1, max_length=200),
-        FieldFactory.many_to_many_field("groups", "Groups", model_class=Group, field_title="name"),
-    ]
-
-    creation_fields = ["codename", "name", "description"]
-    allowed_update_fields = ["codename", "name", "description"]
-
-class PermissionListView(BaseViewBuilder):
-    model = Permission
-    view_type = "list"
-    name = "PermissionList"
-
-    fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("codename", "Code Name"),
-        FieldFactory.string_field("name", "Name"),
-        FieldFactory.string_field("description", "Description"),
-    ]
-```
-
-## Authentication Configuration
-
-### Settings
+### 1. Basic Authentication Setup
 
 ```python
 # settings.py
-from fp_admin.global_settings import *
+from fp_admin.global_settings import Settings
 
-# Authentication settings
-SECRET_KEY = "your-secret-key-here"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+class MySettings(Settings):
+    SECRET_KEY = "your-secret-key-change-in-production"
+    ACCESS_TOKEN_EXPIRE_MINUTES = 30
+    REFRESH_TOKEN_EXPIRE_MINUTES = 90
+    DATABASE_URL = "sqlite+aiosqlite:///./app.db"
 
-# Password settings
-PASSWORD_MIN_LENGTH = 8
-PASSWORD_REQUIRE_UPPERCASE = True
-PASSWORD_REQUIRE_LOWERCASE = True
-PASSWORD_REQUIRE_DIGITS = True
-PASSWORD_REQUIRE_SPECIAL = True
+# main.py
+from fp_admin import FastAPIAdmin
+from fp_admin.apps.auth import *  # Import auth models and views
 
-# Session settings
-SESSION_COOKIE_AGE = 1209600  # 2 weeks
-SESSION_COOKIE_SECURE = True
-SESSION_COOKIE_HTTPONLY = True
+app = FastAPIAdmin()
 ```
 
-### JWT Configuration
+### 2. Create Authentication Endpoints
 
 ```python
-# JWT settings
-JWT_SECRET_KEY = "your-jwt-secret-key"
-JWT_ALGORITHM = "HS256"
-JWT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
-JWT_REFRESH_TOKEN_EXPIRE_DAYS = 7
+# apps/auth/routers.py
+from fastapi import APIRouter, Depends
+from fp_admin.core import get_session
+from .schemas import SigninRequest, SignupRequest
+from .services import UserService
 
-# JWT token types
-JWT_TOKEN_TYPE_ACCESS = "access"
-JWT_TOKEN_TYPE_REFRESH = "refresh"
-```
+router = APIRouter(prefix="/auth", tags=["auth"])
 
-## Authentication Endpoints
+@router.post("/signup")
+async def signup(request: SignupRequest, session=Depends(get_session)):
+    user_service = UserService(session)
+    return await user_service.create_user(request.data)
 
-### Login
-
-```python
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
-from fp_admin.apps.auth.services import AuthService
-
-router = APIRouter()
-
-@router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Authenticate user and return access token"""
-    auth_service = AuthService()
-    user = auth_service.authenticate_user(form_data.username, form_data.password)
-
-    if not user:
-        raise HTTPException(status_code=401, detail="INVALID CREDENTIALS")
-
-    if not user.is_active:
-        raise HTTPException(status_code=401, detail="USER IS INACTIVE")
-
-    access_token = auth_service.create_access_token(data={"sub": user.username})
-
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "is_active": user.is_active,
-            "is_superuser": user.is_superuser,
-        }
-    }
-```
-
-### Register
-
-```python
-@router.post("/register")
-async def register(user_data: UserCreate):
-    """Register a new user"""
-    auth_service = AuthService()
-
-    # Check if user already exists
-    if auth_service.get_user_by_username(user_data.username):
-        raise HTTPException(status_code=400, detail="USERNAME ALREADY REGISTERED")
-
-    if auth_service.get_user_by_email(user_data.email):
-        raise HTTPException(status_code=400, detail="EMAIL ALREADY REGISTERED")
-
-    # Create new user
-    user = auth_service.create_user(user_data)
-
-    return {
-        "message": "USER CREATED SUCCESSFULLY",
-        "user": {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-        }
-    }
-```
-
-### Logout
-
-```python
-@router.post("/logout")
-async def logout(current_user: User = Depends(get_current_user)):
-    """Logout current user"""
-    # In a real implementation, you might want to blacklist the token
-    return {"message": "LOGOUT SUCCESSFUL"}
-```
-
-### Refresh Token
-
-```python
-@router.post("/refresh")
-async def refresh_token(refresh_token: str):
-    """Refresh access token"""
-    auth_service = AuthService()
-
-    try:
-        payload = auth_service.verify_token(refresh_token)
-        username = payload.get("sub")
-
-        if not username:
-            raise HTTPException(status_code=401, detail="INVALID TOKEN")
-
-        user = auth_service.get_user_by_username(username)
-        if not user or not user.is_active:
-            raise HTTPException(status_code=401, detail="USER NOT FOUND OR INACTIVE")
-
-        new_access_token = auth_service.create_access_token(data={"sub": username})
-
-        return {
-            "access_token": new_access_token,
-            "token_type": "bearer"
-        }
-    except Exception:
-        raise HTTPException(status_code=401, detail="INVALID REFRESH TOKEN")
-```
-
-## User Management
-
-### Create User
-
-```python
-from fp_admin.apps.auth.models import User
-from fp_admin.apps.auth.services import AuthService
-
-def create_user(username: str, email: str, password: str, **kwargs):
-    """Create a new user"""
-    auth_service = AuthService()
-
-    user_data = {
-        "username": username,
-        "email": email,
-        "password": password,
-        **kwargs
-    }
-
-    return auth_service.create_user(user_data)
-```
-
-### Update User
-
-```python
-def update_user(user_id: int, **kwargs):
-    """Update user information"""
-    auth_service = AuthService()
-
-    user = auth_service.get_user_by_id(user_id)
-    if not user:
-        raise ValueError("USER NOT FOUND")
-
-    return auth_service.update_user(user, kwargs)
-```
-
-### Delete User
-
-```python
-def delete_user(user_id: int):
-    """Delete a user"""
-    auth_service = AuthService()
-
-    user = auth_service.get_user_by_id(user_id)
-    if not user:
-        raise ValueError("USER NOT FOUND")
-
-    return auth_service.delete_user(user)
-```
-
-## Group Management
-
-### Create Group
-
-```python
-from fp_admin.apps.auth.models import Group
-
-def create_group(name: str, description: str = ""):
-    """Create a new group"""
-    group = Group(name=name, description=description)
-    # Save to database
-    return group
-```
-
-### Add User to Group
-
-```python
-def add_user_to_group(user_id: int, group_id: int):
-    """Add a user to a group"""
-    user = get_user_by_id(user_id)
-    group = get_group_by_id(group_id)
-
-    if user and group:
-        user.groups.append(group)
-        # Save to database
-        return True
-    return False
-```
-
-### Remove User from Group
-
-```python
-def remove_user_from_group(user_id: int, group_id: int):
-    """Remove a user from a group"""
-    user = get_user_by_id(user_id)
-    group = get_group_by_id(group_id)
-
-    if user and group and group in user.groups:
-        user.groups.remove(group)
-        # Save to database
-        return True
-    return False
-```
-
-## Permission Management
-
-### Create Permission
-
-```python
-from fp_admin.apps.auth.models import Permission
-
-def create_permission(codename: str, name: str, description: str = ""):
-    """Create a new permission"""
-    permission = Permission(
-        codename=codename,
-        name=name,
-        description=description
+@router.post("/signin")
+async def signin(request: SigninRequest, session=Depends(get_session)):
+    user_service = UserService(session)
+    return await user_service.authenticate_and_issue_token(
+        request.data.username,
+        request.data.password
     )
-    # Save to database
-    return permission
 ```
 
-### Add Permission to Group
+## Authentication Models
+
+### User Model
+
+The default User model includes comprehensive user management features:
 
 ```python
-def add_permission_to_group(permission_id: int, group_id: int):
-    """Add a permission to a group"""
-    permission = get_permission_by_id(permission_id)
-    group = get_group_by_id(group_id)
+from fp_admin.apps.auth.models import User, Group, Permission
 
-    if permission and group:
-        group.permissions.append(permission)
-        # Save to database
-        return True
-    return False
+class User(TimestampedModel, SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    username: str = Field(unique=True, max_length=150)
+    email: str = Field(unique=True, max_length=255)
+    password: str = Field(max_length=255)
+    first_name: Optional[str] = Field(max_length=100)
+    last_name: Optional[str] = Field(max_length=100)
+    is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
+    email_verified: bool = Field(default=False)
+    last_login: Optional[datetime] = None
+
+    # Relationships
+    groups: List[Group] = Relationship(back_populates="users")
+    permissions: List[Permission] = Relationship(back_populates="users")
 ```
 
-### Check User Permissions
+### Group and Permission Models
 
 ```python
-def has_permission(user: User, permission_codename: str):
-    """Check if user has a specific permission"""
-    for group in user.groups:
-        for permission in group.permissions:
-            if permission.codename == permission_codename:
-                return True
-    return False
+class Group(TimestampedModel, SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, max_length=150)
+    description: str = Field(max_length=200)
+
+    users: List[User] = Relationship(back_populates="groups")
+    permissions: List[Permission] = Relationship(back_populates="groups")
+
+class Permission(TimestampedModel, SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    codename: str = Field(unique=True, max_length=150)
+    name: str = Field(max_length=150)
+    description: str = Field(max_length=200)
+
+    groups: List[Group] = Relationship(back_populates="permissions")
+    users: List[User] = Relationship(back_populates="permissions")
 ```
 
-## Security Best Practices
+## Authentication Providers
+
+### Internal Provider
+
+The Internal Provider handles username/password authentication with JWT tokens:
+
+```python
+from fp_admin.providers.internal import InternalProvider
+from fp_admin.providers.exceptions import AuthError
+
+class UserService:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+        self.provider = self._get_provider()
+
+    def _get_provider(self) -> InternalProvider:
+        return InternalProvider(
+            secret_key=settings.SECRET_KEY,
+            access_token_expires_minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
+            refresh_token_expires_minutes=settings.REFRESH_TOKEN_EXPIRE_MINUTES,
+            user_auth_func=self._authenticate_user
+        )
+
+    async def _authenticate_user(self, username: str, password: str):
+        # Your authentication logic here
+        user = await self.get_user_by_username(username)
+        if user and pwd_context.verify(password, user.password):
+            return user.model_dump()
+        return None
+
+    async def authenticate_and_issue_token(self, username: str, password: str):
+        return await self.provider.authenticate_and_issue_token(username, password)
+```
+
+### Provider Configuration
+
+```python
+# Custom provider configuration
+provider = InternalProvider(
+    secret_key="your-secret-key",
+    access_token_expires_minutes=30,      # Access token lifetime
+    refresh_token_expires_minutes=90,     # Refresh token lifetime
+    algorithm="HS256",                    # JWT algorithm
+    user_auth_func=your_auth_function     # Authentication function
+)
+```
+
+## JWT Token System
+
+### Token Structure
+
+```python
+class TokenResponse(BaseModel, Generic[T]):
+    access_token: str           # Short-lived access token
+    refresh_token: str          # Long-lived refresh token
+    token_type: str = "bearer" # Token type
+    expires_in: float          # Access token expiration timestamp
+    refresh_expires_in: float  # Refresh token expiration timestamp
+    user: T                   # User data
+```
+
+### Token Usage
+
+```python
+# Include token in requests
+headers = {
+    "Authorization": f"Bearer {access_token}"
+}
+
+# Refresh token when access token expires
+@router.post("/refresh")
+async def refresh_token(request: RefreshRequest):
+    user_service = UserService(session)
+    return await user_service.refresh_token(
+        request.refresh_token,
+        request.username
+    )
+```
+
+## Password Security
+
+### Password Hashing
+
+fp-admin uses Argon2 for secure password hashing:
+
+```python
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+
+# Hash password
+hashed_password = pwd_context.hash("user_password")
+
+# Verify password
+is_valid = pwd_context.verify("user_password", hashed_password)
+```
 
 ### Password Validation
 
 ```python
-def validate_password(password: str) -> bool:
-    """Validate password strength"""
-    if len(password) < 8:
-        return False
+from pydantic import BaseModel, validator
 
-    has_upper = any(c.isupper() for c in password)
-    has_lower = any(c.islower() for c in password)
-    has_digit = any(c.isdigit() for c in password)
-    has_special = any(c in "!@#$%^&*()_+-=[]{}|;:,.<>?" for c in password)
+class SignupRequestData(BaseModel):
+    username: str
+    email: str
+    password: str
 
-    return has_upper and has_lower and has_digit and has_special
+    @validator('password')
+    def validate_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters')
+        if not any(c.isupper() for c in v):
+            raise ValueError('Password must contain uppercase letter')
+        if not any(c.islower() for c in v):
+            raise ValueError('Password must contain lowercase letter')
+        if not any(c.isdigit() for c in v):
+            raise ValueError('Password must contain digit')
+        return v
 ```
 
-### Token Security
+## Role-Based Access Control
+
+### Permission System
 
 ```python
-def create_secure_token(user_id: int, expires_delta: timedelta = None):
-    """Create a secure JWT token"""
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
+# Define permissions
+permissions = [
+    Permission(codename="view_user", name="Can view user"),
+    Permission(codename="add_user", name="Can add user"),
+    Permission(codename="change_user", name="Can change user"),
+    Permission(codename="delete_user", name="Can delete user"),
+]
 
-    to_encode = {
-        "sub": str(user_id),
-        "exp": expire,
-        "iat": datetime.utcnow(),
-        "type": "access"
-    }
+# Assign permissions to groups
+admin_group = Group(name="Administrators")
+admin_group.permissions = permissions
 
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+# Assign users to groups
+user.groups.append(admin_group)
 ```
 
-### Rate Limiting
+### Permission Checking
 
 ```python
-from fastapi import HTTPException
-from slowapi import Limiter
-from slowapi.util import get_remote_address
+from fp_admin.apps.auth.models import User
 
-limiter = Limiter(key_func=get_remote_address)
+async def check_permission(user: User, permission_codename: str) -> bool:
+    # Check user permissions
+    user_permissions = [p.codename for p in user.permissions]
 
-@router.post("/login")
-@limiter.limit("5/minute")
-async def login(request: Request, form_data: OAuth2PasswordRequestForm = Depends()):
-    """Login with rate limiting"""
-    # ... login logic
+    # Check group permissions
+    group_permissions = []
+    for group in user.groups:
+        group_permissions.extend([p.codename for p in group.permissions])
+
+    all_permissions = set(user_permissions + group_permissions)
+    return permission_codename in all_permissions
+```
+
+## API Authentication
+
+### Protected Endpoints
+
+```python
+from fastapi import Depends, HTTPException
+from fp_admin.providers.internal import InternalProvider
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: AsyncSession = Depends(get_session)
+) -> User:
+    try:
+        # Decode token
+        provider = InternalProvider(secret_key=settings.SECRET_KEY)
+        payload = provider.decode_token(token, username)
+
+        # Get user from database
+        user = await session.get(User, payload["sub"])
+        if not user or not user.is_active:
+            raise HTTPException(status_code=401, detail="Invalid user")
+
+        return user
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.get("/protected")
+async def protected_endpoint(current_user: User = Depends(get_current_user)):
+    return {"message": f"Hello {current_user.username}"}
+```
+
+### Permission-Based Access
+
+```python
+async def require_permission(permission_codename: str):
+    async def permission_checker(current_user: User = Depends(get_current_user)):
+        if not await check_permission(current_user, permission_codename):
+            raise HTTPException(
+                status_code=403,
+                detail="Insufficient permissions"
+            )
+        return current_user
+    return permission_checker
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: int,
+    current_user: User = Depends(require_permission("delete_user"))
+):
+    # Only users with delete_user permission can access this
+    pass
 ```
 
 ## Error Handling
 
-### Custom Authentication Exceptions
+### Authentication Errors
 
 ```python
-class AuthenticationError(Exception):
-    """Custom authentication error"""
-    pass
+from fp_admin.providers.exceptions import AuthError
+from fp_admin.api.error_handlers import handle_validation_error
 
-class UserNotFoundError(AuthenticationError):
-    """User not found error"""
-    pass
-
-class InvalidCredentialsError(AuthenticationError):
-    """Invalid credentials error"""
-    pass
-
-class UserInactiveError(AuthenticationError):
-    """User inactive error"""
-    pass
+try:
+    token_data = await user_service.authenticate_and_issue_token(
+        username, password
+    )
+except AuthError:
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+except ValidationError as e:
+    raise handle_validation_error(e.details)
 ```
 
-### Error Response Format
+### Common Error Responses
+
+```json
+{
+  "error": "Authentication failed",
+  "status_code": 401,
+  "details": {
+    "username": ["User not found"],
+    "password": ["Invalid password"]
+  },
+  "timestamp": "2024-01-15T10:30:00Z"
+}
+```
+
+## Security Best Practices
+
+### 1. Secret Key Management
 
 ```python
-from fastapi import HTTPException
-from fastapi.responses import JSONResponse
+# Use environment variables
+import os
+SECRET_KEY = os.getenv("SECRET_KEY", "default-key-for-development")
 
-@router.exception_handler(AuthenticationError)
-async def authentication_exception_handler(request, exc):
-    """Handle authentication errors"""
-    return JSONResponse(
-        status_code=401,
-        content={
-            "error": "AUTHENTICATION ERROR",
-            "detail": str(exc),
-            "type": exc.__class__.__name__
-        }
-    )
+# Generate secure keys
+import secrets
+SECRET_KEY = secrets.token_urlsafe(32)
+```
+
+### 2. Token Security
+
+```python
+# Short-lived access tokens
+ACCESS_TOKEN_EXPIRE_MINUTES = 15
+
+# Secure refresh tokens
+REFRESH_TOKEN_EXPIRE_MINUTES = 7 * 24 * 60  # 7 days
+
+# Use HTTPS in production
+CORS_ORIGINS = ["https://yourdomain.com"]
+```
+
+### 3. Password Policies
+
+```python
+# Enforce strong passwords
+MIN_PASSWORD_LENGTH = 8
+REQUIRE_UPPERCASE = True
+REQUIRE_LOWERCASE = True
+REQUIRE_DIGITS = True
+REQUIRE_SPECIAL_CHARS = True
+
+# Rate limiting
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_DURATION = 15  # minutes
 ```
 
 ## Testing Authentication
 
-### Test User Creation
+### Test Configuration
 
 ```python
+# tests/conftest.py
 import pytest
-from fp_admin.apps.auth.models import User
-from fp_admin.apps.auth.services import AuthService
+from fp_admin import FastAPIAdmin
+from fp_admin.apps.auth import *
 
-def test_create_user():
-    """Test user creation"""
-    auth_service = AuthService()
+@pytest.fixture
+def app():
+    return FastAPIAdmin()
 
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "SecurePass123!"
-    }
+@pytest.fixture
+def client(app):
+    return TestClient(app)
 
-    user = auth_service.create_user(user_data)
-
-    assert user.username == "testuser"
-    assert user.email == "test@example.com"
-    assert user.is_active is True
+@pytest.fixture
+def test_user(session):
+    user = User(
+        username="testuser",
+        email="test@example.com",
+        password="hashed_password"
+    )
+    session.add(user)
+    session.commit()
+    return user
 ```
 
-### Test Authentication
+### Authentication Tests
 
 ```python
-def test_user_authentication():
-    """Test user authentication"""
-    auth_service = AuthService()
+# tests/test_auth.py
+def test_user_signup(client):
+    response = client.post("/auth/signup", json={
+        "data": {
+            "username": "newuser",
+            "email": "new@example.com",
+            "password": "SecurePass123!"
+        }
+    })
+    assert response.status_code == 200
+    assert "USER CREATED" in response.json()["message"]
 
-    # Create user
-    user_data = {
-        "username": "testuser",
-        "email": "test@example.com",
-        "password": "SecurePass123!"
-    }
-    user = auth_service.create_user(user_data)
-
-    # Test authentication
-    authenticated_user = auth_service.authenticate_user("testuser", "SecurePass123!")
-
-    assert authenticated_user is not None
-    assert authenticated_user.id == user.id
+def test_user_signin(client, test_user):
+    response = client.post("/auth/signin", json={
+        "data": {
+            "username": "testuser",
+            "password": "SecurePass123!"
+        }
+    })
+    assert response.status_code == 200
+    assert "access_token" in response.json()["data"]
 ```
 
-### Test Permission Checking
+## Next Steps
 
-```python
-def test_user_permissions():
-    """Test user permission checking"""
-    # Create user, group, and permission
-    user = create_user("testuser", "test@example.com", "password")
-    group = create_group("testgroup")
-    permission = create_permission("test_permission", "Test Permission")
-
-    # Add user to group and permission to group
-    add_user_to_group(user.id, group.id)
-    add_permission_to_group(permission.id, group.id)
-
-    # Test permission checking
-    assert has_permission(user, "test_permission") is True
-    assert has_permission(user, "non_existent_permission") is False
-```
+- **[Admin Models](../admin-models.md)** - Configure admin interface for users
+- **[CLI Commands](../cli-commands.md)** - Create users from command line
+- **[Field Types](../field-types.md)** - Customize user form fields
+- **[API Reference](../../api/models.md)** - Authentication API endpoints

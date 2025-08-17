@@ -17,55 +17,53 @@ To create a custom field type, you need to:
 3. **Specify widget configuration** if needed
 
 ```python
-from fp_admin.admin.fields import FieldFactory, FieldView, FieldValidation
-from fp_admin.admin.fields.widgets import WidgetConfig
+from fp_admin.models.field import FieldFactory, FpField
+from fp_admin.models.field import FpFieldValidator, FpFieldError
 
 class CustomFieldFactory(FieldFactory):
     @classmethod
-    def phone_field(cls, name: str, title: str, **kwargs):
+    def phone_field(cls, name: str, **kwargs):
         """Create a phone number field with custom validation."""
         # Define custom validation
-        validation = FieldValidation(
-            pattern=r"^\+?1?\d{9,15}$",
-            required=kwargs.get("required", False)
-        )
+        validators = [
+            FpFieldValidator(
+                name="format",
+                condition_value=r"^\+?1?\d{9,15}$",
+                error=FpFieldError(
+                    code="invalid_format",
+                    message="Phone number must be in valid format"
+                )
+            )
+        ]
 
-        # Create widget configuration
-        widget_config = WidgetConfig(
-            placeholder="+1 (555) 123-4567",
-            mask="(999) 999-9999"
-        )
-
-        return FieldView(
+        # Create field with custom configuration
+        return FpField(
             name=name,
-            title=title,
             field_type="string",
             widget="phone",
-            widget_config=widget_config,
-            validators=validation,
+            validators=validators,
             **kwargs
         )
 
     @classmethod
-    def credit_card_field(cls, name: str, title: str, **kwargs):
+    def credit_card_field(cls, name: str, **kwargs):
         """Create a credit card field with Luhn algorithm validation."""
-        validation = FieldValidation(
-            pattern=r"^\d{4}-\d{4}-\d{4}-\d{4}$",
-            required=kwargs.get("required", False)
-        )
+        validators = [
+            FpFieldValidator(
+                name="format",
+                condition_value=r"^\d{4}-\d{4}-\d{4}-\d{4}$",
+                error=FpFieldError(
+                    code="invalid_format",
+                    message="Credit card must be in format: 1234-5678-9012-3456"
+                )
+            )
+        ]
 
-        widget_config = WidgetConfig(
-            placeholder="1234-5678-9012-3456",
-            mask="9999-9999-9999-9999"
-        )
-
-        return FieldView(
+        return FpField(
             name=name,
-            title=title,
             field_type="string",
             widget="credit_card",
-            widget_config=widget_config,
-            validators=validation,
+            validators=validators,
             **kwargs
         )
 ```
@@ -73,21 +71,21 @@ class CustomFieldFactory(FieldFactory):
 ### Using Custom Field Types
 
 ```python
-from fp_admin.admin.views import BaseViewBuilder
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.registry import ViewBuilder
+from fp_admin.models.field import FieldFactory
 from .custom_fields import CustomFieldFactory
 
-class ContactFormView(BaseViewBuilder):
+class ContactFormView(ViewBuilder):
     model = Contact
     view_type = "form"
     name = "ContactForm"
 
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("name", "Name", required=True),
-        CustomFieldFactory.phone_field("phone", "Phone Number", required=True),
-        CustomFieldFactory.credit_card_field("credit_card", "Credit Card"),
-        FieldFactory.email_field("email", "Email", required=True),
+        FieldFactory.primary_key_field("id"),
+        FieldFactory.string_field("name", required=True),
+        CustomFieldFactory.phone_field("phone", required=True),
+        CustomFieldFactory.credit_card_field("credit_card"),
+        FieldFactory.email_field("email", required=True),
     ]
 ```
 
@@ -98,10 +96,9 @@ class ContactFormView(BaseViewBuilder):
 Custom validators allow you to implement complex validation logic:
 
 ```python
-from fp_admin.admin.fields.errors import FieldError
-from fp_admin.admin.fields import FieldFactory
+from fp_admin.models.field import FpFieldError
 
-def validate_strong_password(value: str) -> FieldError:
+def validate_strong_password(value: str) -> FpFieldError | None:
     """Custom validator for strong password requirements."""
     if not value:
         return None
@@ -124,14 +121,14 @@ def validate_strong_password(value: str) -> FieldError:
         errors.append("PASSWORD MUST CONTAIN AT LEAST ONE SPECIAL CHARACTER")
 
     if errors:
-        return FieldError(
+        return FpFieldError(
             code="WEAK_PASSWORD",
             message="; ".join(errors)
         )
 
     return None
 
-def validate_unique_email(value: str, model_class, current_id=None) -> FieldError:
+def validate_unique_email(value: str, model_class, current_id=None) -> FpFieldError | None:
     """Custom validator to ensure email uniqueness."""
     if not value:
         return None
@@ -139,7 +136,7 @@ def validate_unique_email(value: str, model_class, current_id=None) -> FieldErro
     # Check if email already exists
     existing_user = model_class.objects.filter(email=value).first()
     if existing_user and existing_user.id != current_id:
-        return FieldError(
+        return FpFieldError(
             code="DUPLICATE_EMAIL",
             message="THIS EMAIL ADDRESS IS ALREADY REGISTERED"
         )
@@ -150,18 +147,17 @@ def validate_unique_email(value: str, model_class, current_id=None) -> FieldErro
 ### Using Custom Validators
 
 ```python
-class UserFormView(BaseViewBuilder):
+class UserFormView(ViewBuilder):
     model = User
     view_type = "form"
     name = "UserForm"
 
     fields = [
-        FieldFactory.primarykey_field("id", "ID"),
-        FieldFactory.string_field("username", "Username", required=True),
-        FieldFactory.email_field("email", "Email", required=True),
+        FieldFactory.primary_key_field("id"),
+        FieldFactory.string_field("username", required=True),
+        FieldFactory.email_field("email", required=True),
         FieldFactory.password_field(
             "password",
-            "Password",
             required=True,
             custom_validator=validate_strong_password
         ),
@@ -171,7 +167,7 @@ class UserFormView(BaseViewBuilder):
 ### Complex Custom Validators
 
 ```python
-def validate_business_hours(value: str) -> FieldError:
+def validate_business_hours(value: str) -> FpFieldError | None:
     """Validate business hours format (e.g., '9:00 AM - 5:00 PM')."""
     if not value:
         return None
@@ -180,14 +176,14 @@ def validate_business_hours(value: str) -> FieldError:
     pattern = r"^([0-9]|1[0-2]):[0-5][0-9]\s(AM|PM)\s-\s([0-9]|1[0-2]):[0-5][0-9]\s(AM|PM)$"
 
     if not re.match(pattern, value):
-        return FieldError(
+        return FpFieldError(
             code="INVALID_HOURS_FORMAT",
             message="HOURS MUST BE IN FORMAT: 9:00 AM - 5:00 PM"
         )
 
     return None
 
-def validate_zip_code(value: str) -> FieldError:
+def validate_zip_code(value: str) -> FpFieldError | None:
     """Validate US ZIP code format."""
     if not value:
         return None
@@ -196,7 +192,7 @@ def validate_zip_code(value: str) -> FieldError:
     pattern = r"^\d{5}(-\d{4})?$"
 
     if not re.match(pattern, value):
-        return FieldError(
+        return FpFieldError(
             code="INVALID_ZIP_CODE",
             message="ZIP CODE MUST BE IN FORMAT: 12345 OR 12345-6789"
         )
@@ -211,30 +207,14 @@ def validate_zip_code(value: str) -> FieldError:
 Custom widgets allow you to create specialized UI components:
 
 ```python
-from fp_admin.admin.fields.widgets import WidgetConfig
+from fp_admin.models.field import FpField
 
-class CustomWidgetConfig(WidgetConfig):
-    """Custom widget configuration for specialized widgets."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.custom_property = kwargs.get("custom_property", None)
-
-# Custom field with custom widget
-def create_custom_widget_field(name: str, title: str, **kwargs):
+def create_custom_widget_field(name: str, **kwargs):
     """Create a field with custom widget configuration."""
-    widget_config = CustomWidgetConfig(
-        custom_property="custom_value",
-        placeholder=kwargs.get("placeholder", ""),
-        mask=kwargs.get("mask", "")
-    )
-
-    return FieldView(
+    return FpField(
         name=name,
-        title=title,
         field_type="string",
         widget="custom_widget",
-        widget_config=widget_config,
         **kwargs
     )
 ```
@@ -242,32 +222,12 @@ def create_custom_widget_field(name: str, title: str, **kwargs):
 ### Advanced Widget Configuration
 
 ```python
-class AdvancedWidgetConfig(WidgetConfig):
-    """Advanced widget configuration with multiple options."""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.autocomplete = kwargs.get("autocomplete", False)
-        self.search_url = kwargs.get("search_url", None)
-        self.min_chars = kwargs.get("min_chars", 2)
-        self.max_results = kwargs.get("max_results", 10)
-
-def create_autocomplete_field(name: str, title: str, search_url: str, **kwargs):
+def create_autocomplete_field(name: str, search_url: str, **kwargs):
     """Create an autocomplete field with custom search."""
-    widget_config = AdvancedWidgetConfig(
-        autocomplete=True,
-        search_url=search_url,
-        min_chars=2,
-        max_results=10,
-        placeholder="START TYPING TO SEARCH..."
-    )
-
-    return FieldView(
+    return FpField(
         name=name,
-        title=title,
         field_type="string",
         widget="autocomplete",
-        widget_config=widget_config,
         **kwargs
     )
 ```
@@ -281,13 +241,13 @@ You can extend existing field types with additional functionality:
 ```python
 class ExtendedFieldFactory(FieldFactory):
     @classmethod
-    def enhanced_email_field(cls, name: str, title: str, **kwargs):
+    def enhanced_email_field(cls, name: str, **kwargs):
         """Enhanced email field with additional validation."""
-        # Get base email validation
-        base_field = cls.email_field(name, title, **kwargs)
+        # Get base email field
+        base_field = cls.email_field(name, **kwargs)
 
         # Add custom validation
-        def validate_email_domain(value: str) -> FieldError:
+        def validate_email_domain(value: str) -> FpFieldError | None:
             if not value:
                 return None
 
@@ -298,7 +258,7 @@ class ExtendedFieldFactory(FieldFactory):
 
             domain = value.split("@")[-1].lower()
             if domain in disposable_domains:
-                return FieldError(
+                return FpFieldError(
                     code="DISPOSABLE_EMAIL",
                     message="DISPOSABLE EMAIL ADDRESSES ARE NOT ALLOWED"
                 )
@@ -310,24 +270,12 @@ class ExtendedFieldFactory(FieldFactory):
         return base_field
 
     @classmethod
-    def enhanced_password_field(cls, name: str, title: str, **kwargs):
+    def enhanced_password_field(cls, name: str, **kwargs):
         """Enhanced password field with strength meter."""
-        base_field = cls.password_field(name, title, **kwargs)
+        base_field = cls.password_field(name, **kwargs)
 
         # Add strength meter widget configuration
-        widget_config = WidgetConfig(
-            show_strength_meter=True,
-            min_strength=3,  # 1-5 scale
-            strength_labels={
-                1: "VERY WEAK",
-                2: "WEAK",
-                3: "MEDIUM",
-                4: "STRONG",
-                5: "VERY STRONG"
-            }
-        )
-
-        base_field.widget_config = widget_config
+        base_field.widget = "password_strength"
         return base_field
 ```
 
@@ -340,7 +288,7 @@ You can chain multiple validators together:
 ```python
 def create_validation_chain(*validators):
     """Create a chain of validators."""
-    def chained_validator(value: str) -> FieldError:
+    def chained_validator(value: str) -> FpFieldError | None:
         for validator in validators:
             error = validator(value)
             if error:
@@ -350,21 +298,21 @@ def create_validation_chain(*validators):
     return chained_validator
 
 # Usage example
-def validate_phone_format(value: str) -> FieldError:
+def validate_phone_format(value: str) -> FpFieldError | None:
     """Validate phone number format."""
     import re
     pattern = r"^\+?1?\d{9,15}$"
     if not re.match(pattern, value):
-        return FieldError(
+        return FpFieldError(
             code="INVALID_PHONE_FORMAT",
             message="PHONE NUMBER MUST BE IN VALID FORMAT"
         )
     return None
 
-def validate_phone_country(value: str) -> FieldError:
+def validate_phone_country(value: str) -> FpFieldError | None:
     """Validate phone number country code."""
     if value and not value.startswith("+1"):
-        return FieldError(
+        return FpFieldError(
             code="INVALID_COUNTRY_CODE",
             message="PHONE NUMBER MUST START WITH +1"
         )
@@ -379,7 +327,6 @@ phone_validator = create_validation_chain(
 # Use in field
 FieldFactory.string_field(
     "phone",
-    "Phone Number",
     custom_validator=phone_validator
 )
 ```
@@ -391,7 +338,7 @@ FieldFactory.string_field(
 ```python
 def create_conditional_validator(condition_func, validator_func):
     """Create a validator that only runs under certain conditions."""
-    def conditional_validator(value: str, form_data: dict = None) -> FieldError:
+    def conditional_validator(value: str, form_data: dict = None) -> FpFieldError | None:
         if condition_func(form_data):
             return validator_func(value)
         return None
@@ -403,7 +350,7 @@ def is_business_open(form_data: dict) -> bool:
     """Check if business is marked as open."""
     return form_data.get("is_open", False)
 
-def validate_business_hours_conditional(value: str, form_data: dict = None) -> FieldError:
+def validate_business_hours_conditional(value: str, form_data: dict = None) -> FpFieldError | None:
     """Validate business hours only if business is open."""
     if not is_business_open(form_data):
         return None
@@ -424,9 +371,9 @@ business_hours_validator = create_conditional_validator(
 ```python
 class BusinessFieldFactory(FieldFactory):
     @classmethod
-    def tax_id_field(cls, name: str, title: str, **kwargs):
+    def tax_id_field(cls, name: str, **kwargs):
         """Create a tax ID field with validation."""
-        def validate_tax_id(value: str) -> FieldError:
+        def validate_tax_id(value: str) -> FpFieldError | None:
             if not value:
                 return None
 
@@ -435,68 +382,53 @@ class BusinessFieldFactory(FieldFactory):
 
             # Check length (SSN: 9 digits, EIN: 9 digits)
             if len(clean_value) != 9:
-                return FieldError(
+                return FpFieldError(
                     code="INVALID_TAX_ID_LENGTH",
                     message="TAX ID MUST BE 9 DIGITS"
                 )
 
             # Check if all digits
             if not clean_value.isdigit():
-                return FieldError(
+                return FpFieldError(
                     code="INVALID_TAX_ID_FORMAT",
                     message="TAX ID MUST CONTAIN ONLY DIGITS"
                 )
 
             return None
 
-        widget_config = WidgetConfig(
-            placeholder="123-45-6789",
-            mask="999-99-9999"
-        )
-
-        return FieldView(
+        return FpField(
             name=name,
-            title=title,
             field_type="string",
             widget="tax_id",
-            widget_config=widget_config,
             custom_validator=validate_tax_id,
             **kwargs
         )
 
     @classmethod
-    def credit_score_field(cls, name: str, title: str, **kwargs):
+    def credit_score_field(cls, name: str, **kwargs):
         """Create a credit score field with range validation."""
-        def validate_credit_score(value: int) -> FieldError:
+        def validate_credit_score(value: int) -> FpFieldError | None:
             if value is None:
                 return None
 
             if not isinstance(value, int):
-                return FieldError(
+                return FpFieldError(
                     code="INVALID_CREDIT_SCORE_TYPE",
                     message="CREDIT SCORE MUST BE A NUMBER"
                 )
 
             if value < 300 or value > 850:
-                return FieldError(
+                return FpFieldError(
                     code="INVALID_CREDIT_SCORE_RANGE",
                     message="CREDIT SCORE MUST BE BETWEEN 300 AND 850"
                 )
 
             return None
 
-        widget_config = WidgetConfig(
-            min_value=300,
-            max_value=850,
-            step=1
-        )
-
-        return FieldView(
+        return FpField(
             name=name,
-            title=title,
             field_type="number",
             widget="slider",
-            widget_config=widget_config,
             custom_validator=validate_credit_score,
             **kwargs
         )
@@ -508,13 +440,13 @@ class BusinessFieldFactory(FieldFactory):
 
 ```python
 import pytest
-from fp_admin.admin.fields.errors import FieldError
+from fp_admin.models.field import FpFieldError
 
 def test_phone_field_validation():
     """Test phone field validation."""
     from .custom_fields import CustomFieldFactory
 
-    field = CustomFieldFactory.phone_field("phone", "Phone Number")
+    field = CustomFieldFactory.phone_field("phone")
 
     # Test valid phone numbers
     valid_numbers = [
@@ -560,16 +492,16 @@ def test_custom_validator():
 
 ```python
 # Good: Single responsibility
-def validate_email_format(value: str) -> FieldError:
+def validate_email_format(value: str) -> FpFieldError | None:
     """Validate email format only."""
     import re
     pattern = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
     if not re.match(pattern, value):
-        return FieldError(code="INVALID_EMAIL", message="INVALID EMAIL FORMAT")
+        return FpFieldError(code="INVALID_EMAIL", message="INVALID EMAIL FORMAT")
     return None
 
 # Good: Separate domain validation
-def validate_email_domain(value: str) -> FieldError:
+def validate_email_domain(value: str) -> FpFieldError | None:
     """Validate email domain only."""
     # Domain-specific validation logic
     pass
@@ -579,7 +511,7 @@ def validate_email_domain(value: str) -> FieldError:
 
 ```python
 # Good: Clear, descriptive error messages
-def validate_zip_code(value: str) -> FieldError:
+def validate_zip_code(value: str) -> FpFieldError | None:
     if not value:
         return None
 
@@ -587,7 +519,7 @@ def validate_zip_code(value: str) -> FieldError:
     pattern = r"^\d{5}(-\d{4})?$"
 
     if not re.match(pattern, value):
-        return FieldError(
+        return FpFieldError(
             code="INVALID_ZIP_CODE",
             message="ZIP CODE MUST BE IN FORMAT: 12345 OR 12345-6789"
         )
@@ -598,22 +530,22 @@ def validate_zip_code(value: str) -> FieldError:
 ### 3. Handle Edge Cases
 
 ```python
-def validate_phone_number(value: str) -> FieldError:
+def validate_phone_number(value: str) -> FpFieldError | None:
     """Validate phone number with edge case handling."""
     if not value:
         return None
 
     # Handle None values
     if value is None:
-        return FieldError(code="REQUIRED", message="PHONE NUMBER IS REQUIRED")
+        return FpFieldError(code="REQUIRED", message="PHONE NUMBER IS REQUIRED")
 
     # Handle empty strings
     if value.strip() == "":
-        return FieldError(code="REQUIRED", message="PHONE NUMBER IS REQUIRED")
+        return FpFieldError(code="REQUIRED", message="PHONE NUMBER IS REQUIRED")
 
     # Handle non-string values
     if not isinstance(value, str):
-        return FieldError(code="TYPE_ERROR", message="PHONE NUMBER MUST BE TEXT")
+        return FpFieldError(code="TYPE_ERROR", message="PHONE NUMBER MUST BE TEXT")
 
     # Continue with validation...
     return None
@@ -626,21 +558,20 @@ class CustomFieldFactory(FieldFactory):
     """Custom field factory with specialized field types."""
 
     @classmethod
-    def phone_field(cls, name: str, title: str, **kwargs):
+    def phone_field(cls, name: str, **kwargs):
         """
         Create a phone number field with validation.
 
         Args:
             name: Field name
-            title: Field display title
             **kwargs: Additional field options
 
         Returns:
-            FieldView: Configured phone field
+            FpField: Configured phone field
 
         Example:
             phone_field = CustomFieldFactory.phone_field(
-                "phone", "Phone Number", required=True
+                "phone", required=True
             )
         """
         # Implementation...
@@ -654,7 +585,7 @@ class CustomFieldFactory(FieldFactory):
 from functools import lru_cache
 
 @lru_cache(maxsize=1000)
-def validate_zip_code_cached(value: str) -> FieldError:
+def validate_zip_code_cached(value: str) -> FpFieldError | None:
     """Cached zip code validation for performance."""
     return validate_zip_code(value)
 ```
@@ -662,14 +593,14 @@ def validate_zip_code_cached(value: str) -> FieldError:
 ### 2. Optimize Complex Validations
 
 ```python
-def validate_credit_card_optimized(value: str) -> FieldError:
+def validate_credit_card_optimized(value: str) -> FpFieldError | None:
     """Optimized credit card validation."""
     if not value:
         return None
 
     # Quick format check first
     if not value.replace("-", "").isdigit():
-        return FieldError(code="INVALID_FORMAT", message="INVALID CREDIT CARD FORMAT")
+        return FpFieldError(code="INVALID_FORMAT", message="INVALID CREDIT CARD FORMAT")
 
     # More expensive Luhn algorithm check only if format is valid
     return validate_luhn_algorithm(value)
